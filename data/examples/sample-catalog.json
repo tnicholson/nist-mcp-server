@@ -1,0 +1,23 @@
+{
+  "catalog": {
+    "uuid": "example-catalog-uuid",
+    "metadata": {
+      "title": "Example Security Controls Catalog",
+      "version": "1.0",
+      "oscal-version": "1.0.4"
+    },
+    "controls": [
+      {
+        "id": "ex-1",
+        "class": "SP800-53",
+        "title": "Example Control",
+        "parts": [
+          {
+            "name": "statement",
+            "prose": "This is an example control for demonstration purposes."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "system-security-plan": {
+    "uuid": "example-ssp-uuid",
+    "metadata": {
+      "title": "Example System Security Plan",
+      "version": "1.0",
+      "oscal-version": "1.0.4"
+    },
+    "system-characteristics": {
+      "system-name": "Example Information System",
+      "description": "An example system for demonstration purposes",
+      "security-sensitivity-level": "moderate"
+    },
+    "control-implementation": {
+      "description": "Control implementation for example system",
+      "implemented-requirements": []
+    }
+  }
+}
