@@ -14,71 +14,72 @@ from typing import Dict
 
 logger = logging.getLogger(__name__)
 
+
 class NISTDataDownloader:
     """Downloads and manages NIST data sources"""
-    
+
     # Official NIST data source URLs
     DATA_SOURCES = {
         "sp800-53-controls": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
             "description": "NIST SP 800-53 Rev 5 Controls Catalog (JSON)",
-            "path": "nist-sources/sp800-53/controls.json"
+            "path": "nist-sources/sp800-53/controls.json",
         },
         "sp800-53-controls-xml": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/xml/NIST_SP-800-53_rev5_catalog.xml",
             "description": "NIST SP 800-53 Rev 5 Controls Catalog (XML)",
-            "path": "nist-sources/sp800-53/controls.xml"
+            "path": "nist-sources/sp800-53/controls.xml",
         },
         "sp800-53-low-baseline": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_LOW-baseline_profile.json",
             "description": "NIST SP 800-53 Rev 5 LOW Baseline Profile",
-            "path": "nist-sources/sp800-53/low-baseline.json"
+            "path": "nist-sources/sp800-53/low-baseline.json",
         },
         "sp800-53-moderate-baseline": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_MODERATE-baseline_profile.json",
             "description": "NIST SP 800-53 Rev 5 MODERATE Baseline Profile",
-            "path": "nist-sources/sp800-53/moderate-baseline.json"
+            "path": "nist-sources/sp800-53/moderate-baseline.json",
         },
         "sp800-53-high-baseline": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_HIGH-baseline_profile.json",
             "description": "NIST SP 800-53 Rev 5 HIGH Baseline Profile",
-            "path": "nist-sources/sp800-53/high-baseline.json"
+            "path": "nist-sources/sp800-53/high-baseline.json",
         },
         "oscal-catalog-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_catalog_schema.json",
             "description": "OSCAL Catalog JSON Schema",
-            "path": "oscal-schemas/catalog-schema.json"
+            "path": "oscal-schemas/catalog-schema.json",
         },
         "oscal-profile-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_profile_schema.json",
             "description": "OSCAL Profile JSON Schema",
-            "path": "oscal-schemas/profile-schema.json"
+            "path": "oscal-schemas/profile-schema.json",
         },
         "oscal-ssp-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_ssp_schema.json",
             "description": "OSCAL System Security Plan JSON Schema",
-            "path": "oscal-schemas/ssp-schema.json"
+            "path": "oscal-schemas/ssp-schema.json",
         },
         "oscal-assessment-plan-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_assessment-plan_schema.json",
             "description": "OSCAL Assessment Plan JSON Schema",
-            "path": "oscal-schemas/assessment-plan-schema.json"
+            "path": "oscal-schemas/assessment-plan-schema.json",
         },
         "oscal-assessment-results-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_assessment-results_schema.json",
             "description": "OSCAL Assessment Results JSON Schema",
-            "path": "oscal-schemas/assessment-results-schema.json"
+            "path": "oscal-schemas/assessment-results-schema.json",
         },
         "oscal-poam-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_poam_schema.json",
             "description": "OSCAL Plan of Actions & Milestones JSON Schema",
-            "path": "oscal-schemas/poam-schema.json"
-        }
+            "path": "oscal-schemas/poam-schema.json",
+        },
     }
-    
+
     def __init__(self, data_path: Path):
         self.data_path = Path(data_path)
-    
+
     def download_all(self, force: bool = False) -> Dict[str, bool]:
         """Download all NIST data sources"""
         results = {}
@@ -94,12 +95,9 @@ class NISTDataDownloader:
         self._create_control_mappings()
 
         return results
-    
+
     def _download_source(
-        self,
-        source_id: str,
-        source_info: Dict[str, str],
-        force: bool = False
+        self, source_id: str, source_info: Dict[str, str], force: bool = False
     ) -> bool:
         """Download a single data source"""
         url = source_info["url"]
@@ -107,7 +105,9 @@ class NISTDataDownloader:
 
         # Check if file already exists and is recent
         if file_path.exists() and not force:
-            logger.info(f"Skipping {source_id} - file already exists (use --force to update)")
+            logger.info(
+                f"Skipping {source_id} - file already exists (use --force to update)"
+            )
             return True
 
         # Create directory if needed
@@ -117,10 +117,10 @@ class NISTDataDownloader:
             logger.info(f"Downloading {source_info['description']}...")
 
             with urllib.request.urlopen(url) as response:
-                content = response.read().decode('utf-8')
+                content = response.read().decode("utf-8")
 
                 # Validate JSON content for JSON files
-                if file_path.suffix == '.json':
+                if file_path.suffix == ".json":
                     try:
                         json.loads(content)  # Validate JSON
                     except json.JSONDecodeError as e:
@@ -128,7 +128,7 @@ class NISTDataDownloader:
                         return False
 
                 # Write file
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 logger.info(f"Successfully downloaded {source_id}")
@@ -137,7 +137,7 @@ class NISTDataDownloader:
         except Exception as e:
             logger.error(f"Error downloading {source_id}: {e}")
             return False
-    
+
     def _create_csf_data(self) -> None:
         """Create CSF framework data structure"""
         logger.info("Creating CSF framework data...")
@@ -150,7 +150,7 @@ class NISTDataDownloader:
                 "metadata": {
                     "title": "NIST Cybersecurity Framework 2.0 Core",
                     "version": "2.0",
-                    "oscal-version": "1.0.4"
+                    "oscal-version": "1.0.4",
                 },
                 "functions": [
                     {
@@ -165,13 +165,13 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "ID.AM-1",
-                                        "description": "Physical devices and systems within the organization are inventoried"
+                                        "description": "Physical devices and systems within the organization are inventoried",
                                     },
                                     {
                                         "id": "ID.AM-2",
-                                        "description": "Software platforms and applications within the organization are inventoried"
-                                    }
-                                ]
+                                        "description": "Software platforms and applications within the organization are inventoried",
+                                    },
+                                ],
                             },
                             {
                                 "id": "ID.GV",
@@ -180,11 +180,11 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "ID.GV-1",
-                                        "description": "Organizational cybersecurity policy is established and communicated"
+                                        "description": "Organizational cybersecurity policy is established and communicated",
                                     }
-                                ]
-                            }
-                        ]
+                                ],
+                            },
+                        ],
                     },
                     {
                         "id": "PR",
@@ -198,11 +198,11 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "PR.AC-1",
-                                        "description": "Identities and credentials are issued, managed, verified, revoked, and audited"
+                                        "description": "Identities and credentials are issued, managed, verified, revoked, and audited",
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     },
                     {
                         "id": "DE",
@@ -216,11 +216,11 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "DE.AE-1",
-                                        "description": "A baseline of network operations and expected data flows is established and managed"
+                                        "description": "A baseline of network operations and expected data flows is established and managed",
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     },
                     {
                         "id": "RS",
@@ -234,11 +234,11 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "RS.RP-1",
-                                        "description": "Response plan is executed during or after an incident"
+                                        "description": "Response plan is executed during or after an incident",
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     },
                     {
                         "id": "RC",
@@ -252,13 +252,13 @@ class NISTDataDownloader:
                                 "subcategories": [
                                     {
                                         "id": "RC.RP-1",
-                                        "description": "A recovery plan is executed during or after a cybersecurity incident"
+                                        "description": "A recovery plan is executed during or after a cybersecurity incident",
                                     }
-                                ]
+                                ],
                             }
-                        ]
-                    }
-                ]
+                        ],
+                    },
+                ],
             }
         }
 
@@ -266,11 +266,11 @@ class NISTDataDownloader:
         csf_file = self.data_path / "nist-sources/csf/framework-core.json"
         csf_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(csf_file, 'w', encoding='utf-8') as f:
+        with open(csf_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(csf_data, indent=2))
 
         logger.info("CSF framework data created successfully")
-    
+
     def _create_control_mappings(self) -> None:
         """Create control-to-CSF mappings"""
         logger.info("Creating control-to-CSF mappings...")
@@ -281,7 +281,7 @@ class NISTDataDownloader:
             "metadata": {
                 "title": "SP 800-53 to CSF Mappings",
                 "description": "Mappings between NIST SP 800-53 controls and CSF subcategories",
-                "version": "1.0"
+                "version": "1.0",
             },
             "mappings": {
                 "AC-1": ["ID.GV-1", "PR.AC-1"],
@@ -298,19 +298,19 @@ class NISTDataDownloader:
                 "RA-3": ["ID.AM-1", "ID.AM-2"],
                 "SA-1": ["ID.GV-1"],
                 "SC-1": ["ID.GV-1"],
-                "SI-1": ["ID.GV-1"]
-            }
+                "SI-1": ["ID.GV-1"],
+            },
         }
 
         # Write mappings data
         mappings_file = self.data_path / "nist-sources/mappings/controls-to-csf.json"
         mappings_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(mappings_file, 'w', encoding='utf-8') as f:
+        with open(mappings_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(mappings_data, indent=2))
 
         logger.info("Control mappings created successfully")
-    
+
     def create_examples(self) -> None:
         """Create example OSCAL documents"""
         logger.info("Creating example OSCAL documents...")
@@ -322,7 +322,7 @@ class NISTDataDownloader:
                 "metadata": {
                     "title": "Example Security Controls Catalog",
                     "version": "1.0",
-                    "oscal-version": "1.0.4"
+                    "oscal-version": "1.0.4",
                 },
                 "controls": [
                     {
@@ -332,11 +332,11 @@ class NISTDataDownloader:
                         "parts": [
                             {
                                 "name": "statement",
-                                "prose": "This is an example control for demonstration purposes."
+                                "prose": "This is an example control for demonstration purposes.",
                             }
-                        ]
+                        ],
                     }
-                ]
+                ],
             }
         }
 
@@ -347,17 +347,17 @@ class NISTDataDownloader:
                 "metadata": {
                     "title": "Example System Security Plan",
                     "version": "1.0",
-                    "oscal-version": "1.0.4"
+                    "oscal-version": "1.0.4",
                 },
                 "system-characteristics": {
                     "system-name": "Example Information System",
                     "description": "An example system for demonstration purposes",
-                    "security-sensitivity-level": "moderate"
+                    "security-sensitivity-level": "moderate",
                 },
                 "control-implementation": {
                     "description": "Control implementation for example system",
-                    "implemented-requirements": []
-                }
+                    "implemented-requirements": [],
+                },
             }
         }
 
@@ -365,10 +365,10 @@ class NISTDataDownloader:
         examples_dir = self.data_path / "examples"
         examples_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(examples_dir / "sample-catalog.json", 'w') as f:
+        with open(examples_dir / "sample-catalog.json", "w") as f:
             f.write(json.dumps(example_catalog, indent=2))
 
-        with open(examples_dir / "sample-ssp.json", 'w') as f:
+        with open(examples_dir / "sample-ssp.json", "w") as f:
             f.write(json.dumps(example_ssp, indent=2))
 
         logger.info("Example documents created successfully")
@@ -395,7 +395,9 @@ def download_all_data(data_path: Path = None, force: bool = False) -> None:
     logger.info(f"Download complete: {successful}/{total} sources successful")
 
     if successful < total:
-        failed_sources = [source_id for source_id, success in results.items() if not success]
+        failed_sources = [
+            source_id for source_id, success in results.items() if not success
+        ]
         logger.warning(f"Failed sources: {failed_sources}")
 
 
@@ -405,19 +407,13 @@ def main():
 
     parser = argparse.ArgumentParser(description="Download NIST data sources")
     parser.add_argument(
-        "--data-path",
-        type=Path,
-        help="Path to data directory (default: ../data)"
+        "--data-path", type=Path, help="Path to data directory (default: ../data)"
     )
     parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force download even if files exist"
+        "--force", action="store_true", help="Force download even if files exist"
     )
     parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose logging"
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
 
     args = parser.parse_args()
@@ -425,8 +421,7 @@ def main():
     # Configure logging
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     download_all_data(args.data_path, args.force)
