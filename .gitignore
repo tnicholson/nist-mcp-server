@@ -147,8 +147,8 @@ data/oscal-schemas/
 !data/examples/
 !data/README.md
 
-# UV lock file (can be regenerated)
-uv.lock
+# UV lock file (should be committed for reproducible builds)
+# uv.lock
 
 # Coverage reports
 htmlcov/

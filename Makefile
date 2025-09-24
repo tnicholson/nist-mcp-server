@@ -6,7 +6,9 @@ help:
 	@echo "======================================"
 	@echo ""
 	@echo "Setup Commands:"
-	@echo "  install      Install dependencies"
+	@echo "  install      Install dependencies with uv"
+	@echo "  install-pip  Install dependencies with pip (fallback)"
+	@echo "  install-auto Automated installation (uv + deps + data)"
 	@echo "  setup-dev    Setup development environment"
 	@echo ""
 	@echo "Testing Commands:"
@@ -30,8 +32,16 @@ help:
 
 # Installation and setup
 install:
-	@echo "📦 Installing dependencies..."
+	@echo "📦 Installing dependencies with uv..."
+	uv sync --dev
+
+install-pip:
+	@echo "📦 Installing dependencies with pip (fallback)..."
 	pip install -e ".[dev]"
+
+install-auto:
+	@echo "🚀 Running automated installation..."
+	./scripts/install.sh
 
 setup-dev: install
 	@echo "🔧 Setting up development environment..."

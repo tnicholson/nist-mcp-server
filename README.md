@@ -34,14 +34,37 @@ A Model Context Protocol (MCP) server providing comprehensive access to NIST cyb
 
 ## Quick Start
 
+### Prerequisites
+
+This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management. uv is significantly faster than pip and provides better dependency resolution.
+
 ### 1. Installation
+
+#### Option A: Automated Installation (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/nist-mcp.git
 cd nist-mcp
 
-# Install dependencies
+# Run the installation script (installs uv, dependencies, and downloads data)
+./scripts/install.sh
+```
+
+#### Option B: Manual Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/nist-mcp.git
+cd nist-mcp
+
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies with uv
+uv sync --dev
+
+# Or with pip (alternative)
 pip install -e ".[dev]"
 ```
 
@@ -136,7 +159,7 @@ This project uses official public domain data from NIST:
 
 ```bash
 # Install development dependencies
-pip install -e ".[dev]"
+uv sync --dev
 
 # Setup development environment (includes pre-commit hooks)
 make setup-dev
@@ -169,12 +192,22 @@ make security          # Bandit + Safety security scans
 
 ### Code Quality Tools
 
+- **uv**: Fast Python package manager (10-100x faster than pip)
 - **Ruff**: Fast Python linter and formatter
 - **Bandit**: Security vulnerability scanner
 - **Safety**: Dependency vulnerability checker
 - **MyPy**: Static type checking
 - **pytest**: Testing framework with async support
 - **Coverage**: Code coverage analysis
+
+### Why uv?
+
+We use [uv](https://docs.astral.sh/uv/) for package management because it:
+- **10-100x faster** than pip for dependency resolution and installation
+- **Better dependency resolution** with conflict detection
+- **Reproducible builds** with lock files
+- **Cross-platform compatibility** (Windows, macOS, Linux)
+- **Drop-in replacement** for pip with better UX
 
 ### Adding New Tools
 

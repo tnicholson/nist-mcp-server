@@ -174,6 +174,7 @@ def main():
     parser.add_argument("--performance", action="store_true", help="Run only performance tests")
     parser.add_argument("--coverage", action="store_true", help="Run only coverage tests")
     parser.add_argument("--all", action="store_true", help="Run all tests (default)")
+    parser.add_argument("--use-pip", action="store_true", help="Use pip instead of uv for commands")
     
     args = parser.parse_args()
     
@@ -183,6 +184,15 @@ def main():
     
     print("🚀 NIST MCP Server Test Suite")
     print("=" * 50)
+    
+    # Check if uv is available unless --use-pip is specified
+    if not args.use_pip:
+        try:
+            subprocess.run(["uv", "--version"], capture_output=True, check=True)
+            print("✅ Using uv for package management")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("⚠️  uv not found, falling back to pip")
+            args.use_pip = True
     
     all_results = {}
     

@@ -13,8 +13,11 @@ Thank you for your interest in contributing to the NIST MCP Server! This documen
 git clone https://github.com/your-username/nist-mcp.git
 cd nist-mcp
 
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Install development dependencies
-pip install -e ".[dev]"
+uv sync --dev
 
 # Install pre-commit hooks
 pre-commit install
