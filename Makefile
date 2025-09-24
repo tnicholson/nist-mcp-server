@@ -28,6 +28,7 @@ help:
 	@echo "Development Commands:"
 	@echo "  run-server   Start the MCP server"
 	@echo "  download-data Download NIST data"
+	@echo "  validate-urls Validate all download URLs"
 	@echo "  clean        Clean build artifacts"
 
 # Installation and setup
@@ -101,6 +102,10 @@ run-server:
 download-data:
 	@echo "📥 Downloading NIST data..."
 	python scripts/download_nist_data.py
+
+validate-urls:
+	@echo "🔍 Validating download URLs..."
+	python scripts/validate_urls.py
 
 # Cleanup
 clean:

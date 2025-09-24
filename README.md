@@ -101,17 +101,24 @@ The server provides the following MCP tools for AI assistants:
 - `search_controls(query, family, limit)` - Search controls by keyword
 - `get_control_family(family)` - Get all controls in a family (e.g., "AC", "AU")
 - `get_control_mappings(control_id)` - Get CSF mappings for a control
-- `get_control_baselines(baseline)` - Get controls for Low/Moderate/High baselines
+- `get_baseline_controls(baseline)` - Get controls for Low/Moderate/High baselines
+- `control_relationships(control_id)` - Analyze control relationships and dependencies
 
-### Framework Access
-- Access to complete NIST CSF 2.0 structure
-- Function, category, and subcategory details
-- Framework relationships and mappings
+### Advanced Analysis
+- `gap_analysis(implemented_controls, target_baseline)` - Perform compliance gap analysis
+- `risk_assessment_helper(control_ids)` - Assess risk coverage of control selection
+- `compliance_mapping(framework, control_ids)` - Map to SOC2, ISO27001, etc.
+- `analyze_control_coverage(control_ids)` - Analyze coverage across control families
+
+### Cybersecurity Framework (CSF)
+- `get_csf_framework()` - Get complete NIST CSF 2.0 structure
+- `search_csf_subcategories(query, function)` - Search CSF subcategories
+- `csf_to_controls_mapping(subcategory_id)` - Map CSF subcategories to controls
 
 ### OSCAL Processing
-- Schema validation for OSCAL documents
-- Example document templates
-- Support for all major OSCAL document types
+- `validate_oscal_document(document, document_type)` - Validate OSCAL documents
+- Schema validation for catalogs, profiles, SSPs, assessment plans, POA&Ms
+- Support for all major OSCAL document types with JSON Schema validation
 
 ## Project Structure
 

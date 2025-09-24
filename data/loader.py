@@ -111,6 +111,31 @@ class NISTDataLoader:
         )
         return self._mappings_cache
 
+    async def load_baseline_profiles(self, force_reload: bool = False) -> Dict[str, Any]:
+        """Load NIST baseline profiles (Low, Moderate, High)"""
+        if hasattr(self, '_baselines_cache') and self._baselines_cache is not None and not force_reload:
+            return self._baselines_cache
+
+        baselines = {}
+        baseline_files = {
+            "low": "nist-sources/sp800-53/low-baseline.json",
+            "moderate": "nist-sources/sp800-53/moderate-baseline.json", 
+            "high": "nist-sources/sp800-53/high-baseline.json"
+        }
+
+        for baseline_name, filename in baseline_files.items():
+            baseline_file = self.data_path / filename
+            if baseline_file.exists():
+                async with aiofiles.open(baseline_file, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    baselines[baseline_name] = json.loads(content)
+            else:
+                logger.warning(f"Baseline file not found: {baseline_file}")
+
+        self._baselines_cache = baselines
+        logger.info(f"Loaded {len(baselines)} baseline profiles")
+        return baselines
+
     async def load_oscal_schemas(self, force_reload: bool = False) -> Dict[str, Any]:
         """Load OSCAL JSON schemas"""
         if self._schemas_cache is not None and not force_reload:
