@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ControlTools:
     """Tools for managing NIST SP 800-53 controls"""
 
-    def __init__(self, data_loader):
+    def __init__(self, data_loader: Any) -> None:
         self.data_loader = data_loader
 
     async def get_control(self, control_id: str) -> Dict[str, Any]:
@@ -43,7 +43,7 @@ class ControlTools:
 
     async def search_controls(
         self, query: str, family: Optional[str] = None, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """Search controls by keyword or topic"""
         controls_data = await self.data_loader.load_controls()
 
