@@ -1,0 +1,21 @@
+# CODEOWNERS file for NIST MCP Server
+# This file defines who owns different parts of the codebase
+
+# Global ownership - all files
+* @tnicholson
+
+# Core server code
+/src/nist_mcp/ @tnicholson
+
+# Security and analysis tools
+/src/nist_mcp/analysis_tools.py @tnicholson
+/tests/test_security.py @tnicholson
+
+# Configuration files
+/pyproject.toml @tnicholson
+/.github/ @tnicholson
+
+# Documentation
+/README.md @tnicholson
+/CONTRIBUTING.md @tnicholson
+/SECURITY.md @tnicholson
