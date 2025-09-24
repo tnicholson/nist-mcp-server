@@ -182,7 +182,7 @@ class NISTDataLoader:
 
         # Parse XML structure - this is a simplified parser
         # In production, you'd want more robust XML parsing based on actual NIST XML schema
-        controls = []
+        controls: List[Dict[str, Any]] = []
 
         # Look for control elements (adjust XPath based on actual XML structure)
         for control_elem in root.findall(".//control"):
@@ -192,7 +192,7 @@ class NISTDataLoader:
             title = title_elem.text if title_elem is not None else ""
 
             # Extract other control properties
-            control = {
+            control: Dict[str, Any] = {
                 "id": control_id,
                 "title": title,
                 "class": "SP800-53",
@@ -205,7 +205,8 @@ class NISTDataLoader:
                 part_prose = part_elem.find(".//prose")
                 part_text = part_prose.text if part_prose is not None else ""
 
-                control["parts"].append({"name": part_name, "prose": part_text})
+                if isinstance(control["parts"], list):
+                    control["parts"].append({"name": part_name, "prose": part_text})
 
             controls.append(control)
 

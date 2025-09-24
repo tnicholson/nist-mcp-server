@@ -71,7 +71,7 @@ where = ["src"]
 [tool.black]
 line-length = 88
 target-version = ['py38']
-include = '\.pyi?$'$'$'
+include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
@@ -93,7 +93,7 @@ show_error_codes = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = "-v --tb=short --cov=src/nist_mcp --cov-report=term-missing --cov-report=xml"
+addopts = "-v --tb=short"
 asyncio_mode = "auto"
 
 [tool.ruff]

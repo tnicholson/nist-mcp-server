@@ -1,0 +1,32 @@
+{
+  "timestamp": 1758689298.182865,
+  "total_categories": 1,
+  "results": {
+    "Code Quality": [
+      {
+        "test": "Ruff Linting",
+        "passed": false,
+        "stdout": "UP035 `typing.Dict` is deprecated, use `dict` instead\n  --> scripts/download_nist_data.py:13:1\n   |\n11 | import urllib.request\n12 | from pathlib import Path\n13 | from typing import Dict\n   | ^^^^^^^^^^^^^^^^^^^^^^^\n14 |\n15 | logger = logging.getLogger(__name__)\n   |\n\nRUF012 Mutable class attributes should be annotated with `typing.ClassVar`\n  --> scripts/download_nist_data.py:22:20\n   |\n21 |       # Official NIST data source URLs\n22 |       DATA_SOURCES = {\n   |  ____________________^\n23 | |         \"sp800-53-controls\": {\n24 | |             \"url\": \"https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_cat\u2026\n25 | |             \"description\": \"NIST SP 800-53 Rev 5 Controls Catalog (JSON)\",\n26 | |             \"path\": \"nist-sources/sp800-53/controls.json\",\n27 | |         },\n28 | |         \"sp800-53-controls-xml\": {\n29 | |             \"url\": \"https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/xml/NIST",
+        "stderr": "warning: The top-level linter settings are deprecated in favour of their counterparts in the `lint` section. Please update the following options in `pyproject.toml`:\n  - 'ignore' -> 'lint.ignore'\n  - 'select' -> 'lint.select'\n  - 'pydocstyle' -> 'lint.pydocstyle'\n  - 'per-file-ignores' -> 'lint.per-file-ignores'\n"
+      },
+      {
+        "test": "Ruff Format Check",
+        "passed": false,
+        "stdout": "Would reformat: scripts/run_tests.py\nWould reformat: scripts/validate_urls.py\nWould reformat: src/nist_mcp/analysis_tools.py\nWould reformat: src/nist_mcp/server.py\nWould reformat: tests/test_data_loader.py\nWould reformat: tests/test_mcp_integration.py\nWould reformat: tests/test_performance.py\nWould reformat: tests/test_security.py\nWould reformat: tests/test_server.py\n9 files would be reformatted, 7 files already formatted\n",
+        "stderr": "warning: The top-level linter settings are deprecated in favour of their counterparts in the `lint` section. Please update the following options in `pyproject.toml`:\n  - 'ignore' -> 'lint.ignore'\n  - 'select' -> 'lint.select'\n  - 'pydocstyle' -> 'lint.pydocstyle'\n  - 'per-file-ignores' -> 'lint.per-file-ignores'\n"
+      },
+      {
+        "test": "Type Checking",
+        "passed": false,
+        "stdout": "src/nist_mcp/analysis_tools.py:129: error: Generator has incompatible item type \"int\"; expected \"bool\"  [misc]\nsrc/nist_mcp/analysis_tools.py:129: error: Unsupported operand types for < (\"int\" and \"object\")  [operator]\nsrc/nist_mcp/data/loader.py:176: error: Need type annotation for \"control\"  [var-annotated]\nsrc/nist_mcp/data/loader.py:189: error: Item \"str\" of \"list[Any] | str | None\" has no attribute \"append\"  [union-attr]\nsrc/nist_mcp/data/loader.py:189: error: Item \"None\" of \"list[Any] | str | None\" has no attribute \"append\"  [union-attr]\nsrc/nist_mcp/data/loader.py:212: error: Returning Any from function declared to return \"dict[str, Any] | None\"  [no-any-return]\nsrc/nist_mcp/server.py:303: error: Function is missing a return type annotation  [no-untyped-def]\nsrc/nist_mcp/server.py:303: note: Use \"-> None\" if function does not return a value\nFound 7 errors in 3 files (checked 7 source files)\n",
+        "stderr": ""
+      },
+      {
+        "test": "Unit Tests",
+        "passed": false,
+        "stdout": "",
+        "stderr": "ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]\npytest: error: unrecognized arguments: --cov=src/nist_mcp --cov-report=term-missing --cov-report=xml\n  inifile: /Users/personal/nist-mcp-server/pyproject.toml\n  rootdir: /Users/personal/nist-mcp-server\n\n"
+      }
+    ]
+  }
+}
