@@ -1,0 +1,25 @@
+NIST Data License Information
+
+The following NIST publications and data are in the Public Domain:
+
+1. NIST Special Publication 800-53 Revision 5
+   "Security and Privacy Controls for Information Systems and Organizations"
+   
+2. NIST Cybersecurity Framework 2.0
+   "A Framework for Improving Critical Infrastructure Cybersecurity"
+
+These works are produced by the United States Government and are not subject to 
+copyright protection in the United States. They may be reproduced and distributed 
+in their entirety without further permission from NIST.
+
+However, as a courtesy we ask that you acknowledge NIST as the source of the material.
+
+Source: National Institute of Standards and Technology (NIST)
+Website: https://www.nist.gov/
+
+NIST Disclaimer:
+Any identification of commercial or open-source software in this document is done 
+so purely in order to specify the methodology adequately. Such identification is 
+not intended to imply recommendation or endorsement by the National Institute of 
+Standards and Technology, nor is it intended to imply that the software identified 
+are necessarily the best available for the purpose.

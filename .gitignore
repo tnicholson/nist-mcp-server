@@ -146,3 +146,15 @@ data/oscal-schemas/
 # Keep examples and structure
 !data/examples/
 !data/README.md
+
+# UV lock file (can be regenerated)
+uv.lock
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# Distribution / packaging
+dist/
+*.egg-info/
