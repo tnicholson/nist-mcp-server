@@ -81,11 +81,7 @@ async def search_controls(
     query: str, family: Optional[str] = None, limit: int = 10
 ) -> Dict[str, Any]:
     """Search NIST controls by keyword or topic"""
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str(Path(__file__).parent.parent.parent))
-    from tools.control_tools import ControlTools
+    from .control_tools import ControlTools
 
     tools = ControlTools(nist_server.loader)
     return await tools.search_controls(query, family, limit)
@@ -94,11 +90,7 @@ async def search_controls(
 @app.tool()
 async def get_control_family(family: str) -> Dict[str, Any]:
     """Get all controls in a specific family (e.g., 'AC', 'AU', 'CA')"""
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str(Path(__file__).parent.parent.parent))
-    from tools.control_tools import ControlTools
+    from .control_tools import ControlTools
 
     tools = ControlTools(nist_server.loader)
     return await tools.get_control_family(family)
@@ -107,11 +99,7 @@ async def get_control_family(family: str) -> Dict[str, Any]:
 @app.tool()
 async def get_control_mappings(control_id: str) -> Dict[str, Any]:
     """Get CSF mappings for a specific control"""
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str(Path(__file__).parent.parent.parent))
-    from tools.control_tools import ControlTools
+    from .control_tools import ControlTools
 
     tools = ControlTools(nist_server.loader)
     return await tools.get_control_mappings(control_id)
@@ -120,11 +108,7 @@ async def get_control_mappings(control_id: str) -> Dict[str, Any]:
 @app.tool()
 async def get_baseline_controls(baseline: str = "moderate") -> Dict[str, Any]:
     """Get controls for a specific baseline (low, moderate, high)"""
-    import sys
-    from pathlib import Path
-
-    sys.path.append(str(Path(__file__).parent.parent.parent))
-    from tools.control_tools import ControlTools
+    from .control_tools import ControlTools
 
     tools = ControlTools(nist_server.loader)
     return await tools.get_control_baselines(baseline)

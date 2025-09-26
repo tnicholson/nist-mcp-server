@@ -65,15 +65,9 @@ class NISTDataLoader:
         else:
             async with aiofiles.open(controls_file, "r", encoding="utf-8") as f:
                 content = await f.read()
-                data = json.loads(content)
-                controls = []
-                for group in data.get("catalog", {}).get("groups", []):
-                    controls.extend(group.get("controls", []))
-                self._controls_cache = {"catalog": {"controls": controls}}
+                self._controls_cache = json.loads(content)
 
-        logger.info(
-            f"Loaded {len(self._controls_cache.get('catalog', {}).get('controls', []))} controls"
-        )
+        logger.info(f"Loaded {len(self._controls_cache.get('controls', []))} controls")
         return self._controls_cache
 
     async def load_csf(self, force_reload: bool = False) -> Dict[str, Any]:
@@ -116,6 +110,31 @@ class NISTDataLoader:
             f"Loaded {len(self._mappings_cache.get('mappings', {}))} control mappings"
         )
         return self._mappings_cache
+
+    async def load_baseline_profiles(self, force_reload: bool = False) -> Dict[str, Any]:
+        """Load NIST baseline profiles (Low, Moderate, High)"""
+        if hasattr(self, '_baselines_cache') and self._baselines_cache is not None and not force_reload:
+            return self._baselines_cache
+
+        baselines = {}
+        baseline_files = {
+            "low": "nist-sources/sp800-53/low-baseline.json",
+            "moderate": "nist-sources/sp800-53/moderate-baseline.json", 
+            "high": "nist-sources/sp800-53/high-baseline.json"
+        }
+
+        for baseline_name, filename in baseline_files.items():
+            baseline_file = self.data_path / filename
+            if baseline_file.exists():
+                async with aiofiles.open(baseline_file, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    baselines[baseline_name] = json.loads(content)
+            else:
+                logger.warning(f"Baseline file not found: {baseline_file}")
+
+        self._baselines_cache = baselines
+        logger.info(f"Loaded {len(baselines)} baseline profiles")
+        return baselines
 
     async def load_oscal_schemas(self, force_reload: bool = False) -> Dict[str, Any]:
         """Load OSCAL JSON schemas"""
@@ -163,7 +182,7 @@ class NISTDataLoader:
 
         # Parse XML structure - this is a simplified parser
         # In production, you'd want more robust XML parsing based on actual NIST XML schema
-        controls = []
+        controls: List[Dict[str, Any]] = []
 
         # Look for control elements (adjust XPath based on actual XML structure)
         for control_elem in root.findall(".//control"):
@@ -173,7 +192,7 @@ class NISTDataLoader:
             title = title_elem.text if title_elem is not None else ""
 
             # Extract other control properties
-            control = {
+            control: Dict[str, Any] = {
                 "id": control_id,
                 "title": title,
                 "class": "SP800-53",
@@ -186,7 +205,8 @@ class NISTDataLoader:
                 part_prose = part_elem.find(".//prose")
                 part_text = part_prose.text if part_prose is not None else ""
 
-                control["parts"].append({"name": part_name, "prose": part_text})
+                if isinstance(control["parts"], list):
+                    control["parts"].append({"name": part_name, "prose": part_text})
 
             controls.append(control)
 
