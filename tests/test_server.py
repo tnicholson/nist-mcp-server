@@ -2,9 +2,10 @@
 Basic tests for NIST MCP Server
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from nist_mcp.server import NISTMCPServer
 

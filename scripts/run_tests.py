@@ -5,12 +5,12 @@ Comprehensive Test Runner for NIST MCP Server
 Runs all tests including security, performance, and integration tests.
 """
 
+import argparse
+import json
 import subprocess
 import sys
-import argparse
-from pathlib import Path
-import json
 import time
+from pathlib import Path
 
 
 def run_command(cmd, description, capture_output=True):
@@ -258,7 +258,7 @@ def main():
     with open("test-report.json", "w") as f:
         json.dump(json_report, f, indent=2)
 
-    print(f"\n📄 Detailed report saved to: test-report.json")
+    print("\n📄 Detailed report saved to: test-report.json")
 
     sys.exit(0 if success else 1)
 

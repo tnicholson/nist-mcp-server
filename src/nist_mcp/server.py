@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""
-NIST MCP Server - Main server implementation
-"""
+"""NIST MCP Server - Main server implementation"""
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any
 
 from mcp.server import FastMCP
 
@@ -18,14 +17,14 @@ logger = logging.getLogger(__name__)
 class NISTMCPServer:
     """Main NIST MCP Server implementation"""
 
-    def __init__(self, data_path: Optional[Path] = None):
+    def __init__(self, data_path: Path | None = None):
         if data_path is None:
             data_path = Path(__file__).parent.parent.parent / "data"
         self.data_path = data_path
         self.loader = NISTDataLoader(self.data_path)
         logger.info(f"NIST MCP Server initialized with data path: {data_path}")
 
-    async def list_nist_controls(self) -> List[Dict[str, Any]]:
+    async def list_nist_controls(self) -> list[dict[str, Any]]:
         """List available NIST controls"""
         try:
             controls_data = await self.loader.load_controls()
@@ -37,7 +36,7 @@ class NISTMCPServer:
             logger.error(f"Error loading controls: {e}")
             return []
 
-    async def get_control_details(self, control_id: str) -> Dict[str, Any]:
+    async def get_control_details(self, control_id: str) -> dict[str, Any]:
         """Get details for a specific control"""
         try:
             controls_data = await self.loader.load_controls()
@@ -65,21 +64,21 @@ app = FastMCP("nist-mcp-server", lifespan=lifespan)
 
 
 @app.tool()
-async def list_controls() -> List[Dict[str, Any]]:
+async def list_controls() -> list[dict[str, Any]]:
     """List all available NIST controls"""
     return await nist_server.list_nist_controls()
 
 
 @app.tool()
-async def get_control(control_id: str) -> Dict[str, Any]:
+async def get_control(control_id: str) -> dict[str, Any]:
     """Get details for a specific NIST control"""
     return await nist_server.get_control_details(control_id)
 
 
 @app.tool()
 async def search_controls(
-    query: str, family: Optional[str] = None, limit: int = 10
-) -> Dict[str, Any]:
+    query: str, family: str | None = None, limit: int = 10
+) -> dict[str, Any]:
     """Search NIST controls by keyword or topic"""
     from .control_tools import ControlTools
 
@@ -88,7 +87,7 @@ async def search_controls(
 
 
 @app.tool()
-async def get_control_family(family: str) -> Dict[str, Any]:
+async def get_control_family(family: str) -> dict[str, Any]:
     """Get all controls in a specific family (e.g., 'AC', 'AU', 'CA')"""
     from .control_tools import ControlTools
 
@@ -97,7 +96,7 @@ async def get_control_family(family: str) -> Dict[str, Any]:
 
 
 @app.tool()
-async def get_control_mappings(control_id: str) -> Dict[str, Any]:
+async def get_control_mappings(control_id: str) -> dict[str, Any]:
     """Get CSF mappings for a specific control"""
     from .control_tools import ControlTools
 
@@ -106,7 +105,7 @@ async def get_control_mappings(control_id: str) -> Dict[str, Any]:
 
 
 @app.tool()
-async def get_baseline_controls(baseline: str = "moderate") -> Dict[str, Any]:
+async def get_baseline_controls(baseline: str = "moderate") -> dict[str, Any]:
     """Get controls for a specific baseline (low, moderate, high)"""
     from .control_tools import ControlTools
 
@@ -115,7 +114,7 @@ async def get_baseline_controls(baseline: str = "moderate") -> Dict[str, Any]:
 
 
 @app.tool()
-async def get_csf_framework() -> Dict[str, Any]:
+async def get_csf_framework() -> dict[str, Any]:
     """Get the complete NIST Cybersecurity Framework structure"""
     try:
         csf_data = await nist_server.loader.load_csf()
@@ -127,8 +126,8 @@ async def get_csf_framework() -> Dict[str, Any]:
 
 @app.tool()
 async def search_csf_subcategories(
-    query: str, function: Optional[str] = None
-) -> Dict[str, Any]:
+    query: str, function: str | None = None
+) -> dict[str, Any]:
     """Search CSF subcategories by keyword or function"""
     try:
         csf_data = await nist_server.loader.load_csf()
@@ -168,7 +167,7 @@ async def search_csf_subcategories(
 
 
 @app.tool()
-async def csf_to_controls_mapping(subcategory_id: str) -> Dict[str, Any]:
+async def csf_to_controls_mapping(subcategory_id: str) -> dict[str, Any]:
     """Get NIST controls mapped to a specific CSF subcategory"""
     try:
         mappings_data = await nist_server.loader.load_control_mappings()
@@ -190,13 +189,13 @@ async def csf_to_controls_mapping(subcategory_id: str) -> Dict[str, Any]:
 
 
 @app.tool()
-async def analyze_control_coverage(control_ids: List[str]) -> Dict[str, Any]:
+async def analyze_control_coverage(control_ids: list[str]) -> dict[str, Any]:
     """Analyze coverage across control families for a list of controls"""
     try:
         controls_data = await nist_server.loader.load_controls()
 
         # Analyze family coverage
-        family_coverage: Dict[str, int] = {}
+        family_coverage: dict[str, int] = {}
         valid_controls = []
         invalid_controls = []
 
@@ -230,8 +229,8 @@ async def analyze_control_coverage(control_ids: List[str]) -> Dict[str, Any]:
 
 @app.tool()
 async def gap_analysis(
-    implemented_controls: List[str], target_baseline: str = "moderate"
-) -> Dict[str, Any]:
+    implemented_controls: list[str], target_baseline: str = "moderate"
+) -> dict[str, Any]:
     """Perform gap analysis between implemented controls and target baseline"""
     from .analysis_tools import NISTAnalysisTools
 
@@ -240,7 +239,7 @@ async def gap_analysis(
 
 
 @app.tool()
-async def risk_assessment_helper(control_ids: List[str]) -> Dict[str, Any]:
+async def risk_assessment_helper(control_ids: list[str]) -> dict[str, Any]:
     """Help assess risk coverage based on control selection"""
     from .analysis_tools import NISTAnalysisTools
 
@@ -249,7 +248,7 @@ async def risk_assessment_helper(control_ids: List[str]) -> Dict[str, Any]:
 
 
 @app.tool()
-async def compliance_mapping(framework: str, control_ids: List[str]) -> Dict[str, Any]:
+async def compliance_mapping(framework: str, control_ids: list[str]) -> dict[str, Any]:
     """Map controls to compliance frameworks (SOC2, ISO27001, etc.)"""
     from .analysis_tools import NISTAnalysisTools
 
@@ -258,7 +257,7 @@ async def compliance_mapping(framework: str, control_ids: List[str]) -> Dict[str
 
 
 @app.tool()
-async def control_relationships(control_id: str) -> Dict[str, Any]:
+async def control_relationships(control_id: str) -> dict[str, Any]:
     """Analyze relationships and dependencies between controls"""
     from .analysis_tools import NISTAnalysisTools
 
@@ -268,8 +267,8 @@ async def control_relationships(control_id: str) -> Dict[str, Any]:
 
 @app.tool()
 async def validate_oscal_document(
-    document: Dict[str, Any], document_type: str = "catalog"
-) -> Dict[str, Any]:
+    document: dict[str, Any], document_type: str = "catalog"
+) -> dict[str, Any]:
     """Validate an OSCAL document against its JSON schema"""
     try:
         import jsonschema

@@ -4,12 +4,13 @@ MCP Server Integration Tests
 Tests for MCP-specific functionality and tool integration.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
 import json
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
+import pytest
 from mcp.server import FastMCP
+
 from nist_mcp.server import app, nist_server
 
 
@@ -98,9 +99,9 @@ class TestMCPIntegration:
 
         expected_tools = ["list_controls", "get_control"]
         for tool_name in expected_tools:
-            assert tool_name in tool_names, (
-                f"Tool {tool_name} not found in registered tools"
-            )
+            assert (
+                tool_name in tool_names
+            ), f"Tool {tool_name} not found in registered tools"
 
     @pytest.mark.asyncio
     async def test_server_error_handling(self):
@@ -186,7 +187,7 @@ class TestMCPToolValidation:
     @pytest.mark.asyncio
     async def test_json_serialization(self):
         """Test that tool responses are JSON serializable"""
-        from nist_mcp.server import list_controls, get_control
+        from nist_mcp.server import get_control, list_controls
 
         sample_controls = [{"id": "AC-1", "title": "Test Control"}]
         sample_control = {

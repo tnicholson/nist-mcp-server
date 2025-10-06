@@ -4,14 +4,15 @@ Security Tests for NIST MCP Server
 Tests for security vulnerabilities and secure coding practices.
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, patch, mock_open
+from unittest.mock import AsyncMock, mock_open, patch
 
-from nist_mcp.server import NISTMCPServer
+import pytest
+
 from nist_mcp.data.loader import NISTDataLoader
+from nist_mcp.server import NISTMCPServer
 
 
 class TestInputValidation:
@@ -257,9 +258,9 @@ class TestNetworkSecurity:
         # Check that all official data sources use HTTPS
         for source_id, source_info in NISTDataDownloader.DATA_SOURCES.items():
             url = source_info["url"]
-            assert url.startswith("https://"), (
-                f"Source {source_id} does not use HTTPS: {url}"
-            )
+            assert url.startswith(
+                "https://"
+            ), f"Source {source_id} does not use HTTPS: {url}"
 
 
 class TestPrivacyAndDataHandling:

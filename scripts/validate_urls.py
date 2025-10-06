@@ -5,10 +5,9 @@ URL Validation Script for NIST MCP Server
 Validates all URLs in the download script to ensure they're accessible.
 """
 
-import urllib.request
-import urllib.error
-import json
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 # Import the data sources from the download script
@@ -44,11 +43,11 @@ def validate_url(url, description):
 
                 if url.endswith(".json") and not is_json:
                     print(
-                        f"   ⚠️  WARNING: Expected JSON but content doesn't look like JSON"
+                        "   ⚠️  WARNING: Expected JSON but content doesn't look like JSON"
                     )
                 elif url.endswith(".xml") and not is_xml:
                     print(
-                        f"   ⚠️  WARNING: Expected XML but content doesn't look like XML"
+                        "   ⚠️  WARNING: Expected XML but content doesn't look like XML"
                     )
 
                 print(f"   ✅ SUCCESS: HTTP {status_code}")

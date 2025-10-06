@@ -4,12 +4,13 @@ Performance and Load Tests for NIST MCP Server
 Tests for performance characteristics and load handling.
 """
 
-import pytest
 import asyncio
+import json
 import time
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
-import json
+
+import pytest
 
 from nist_mcp.server import NISTMCPServer
 

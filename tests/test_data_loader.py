@@ -2,10 +2,11 @@
 Tests for NIST Data Loader
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, mock_open
 import json
+from pathlib import Path
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from nist_mcp.data.loader import NISTDataLoader
 
