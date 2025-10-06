@@ -11,6 +11,17 @@ A Model Context Protocol (MCP) server providing comprehensive access to NIST cyb
 - Search controls by keyword, family, or ID
 - Baseline control sets (Low, Moderate, High impact levels)
 
+### 🛡️ NIST SP 800-171 Rev 2 CUI Baseline
+- Complete CUI baseline profile for protecting Controlled Unclassified Information
+- SP 800-171 specific control requirements
+- Baseline assessment and compliance tools
+
+### 📈 Cybersecurity Maturity Model Certification (CMMC) 2.0
+- Complete CMMC framework with all 5 maturity levels
+- Level-specific control requirements and assessments
+- Compliance evaluation against target maturity levels
+- CMMC level progress tracking and gap analysis
+
 ### 🛡️ NIST Cybersecurity Framework 2.0
 - Complete CSF functions: Identify, Protect, Detect, Respond, Recover
 - Categories and subcategories with detailed descriptions
@@ -104,6 +115,14 @@ The server provides the following MCP tools for AI assistants:
 - `get_baseline_controls(baseline)` - Get controls for Low/Moderate/High baselines
 - `control_relationships(control_id)` - Analyze control relationships and dependencies
 
+### SP 800-171/CUI Baseline
+- `get_sp800171_baseline()` - Get SP 800-171 CUI baseline controls
+
+### CMMC Framework
+- `get_cmmc_framework()` - Get complete CMMC 2.0 framework structure
+- `get_cmmc_level(level)` - Get controls for specific CMMC level (1-5)
+- `cmmc_compliance_assessment(implemented_controls, target_level)` - Assess CMMC compliance
+
 ### Advanced Analysis
 - `gap_analysis(implemented_controls, target_baseline)` - Perform compliance gap analysis
 - `risk_assessment_helper(control_ids)` - Assess risk coverage of control selection
@@ -133,12 +152,14 @@ nist-mcp/
 ├── data/                   # NIST data sources
 │   ├── nist-sources/       # Official NIST data
 │   │   ├── sp800-53/       # SP 800-53 controls and baselines
+│   │   ├── sp800-171/      # SP 800-171 CUI baseline profiles
+│   │   ├── cmmc/           # CMMC framework and maturity levels
 │   │   ├── csf/            # Cybersecurity Framework data
 │   │   └── mappings/       # Control-to-CSF mappings
 │   ├── oscal-schemas/      # OSCAL JSON schemas
 │   └── examples/           # Example OSCAL documents
 ├── scripts/                # Utility scripts
-│   └── download_nist_data.py # Data download script
+│   └── download_nist_data.py # Data download script and CMMC creation
 ├── tools/                  # Additional control tools
 │   └── control_tools.py    # Control management utilities
 └── tests/                  # Test suite

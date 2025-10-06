@@ -45,6 +45,11 @@ class NISTDataDownloader:
             "description": "NIST SP 800-53 Rev 5 HIGH Baseline Profile",
             "path": "nist-sources/sp800-53/high-baseline.json",
         },
+        "sp800-171-cui-baseline": {
+            "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-171/rev2/json/NIST_SP-800-171_rev2_CUI-baseline_profile.json",
+            "description": "NIST SP 800-171 Rev 2 CUI Baseline Profile",
+            "path": "nist-sources/sp800-171/cui-baseline.json",
+        },
         "oscal-catalog-schema": {
             "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_catalog_schema.json",
             "description": "OSCAL Catalog JSON Schema",
@@ -93,6 +98,9 @@ class NISTDataDownloader:
 
         # Create control mappings
         self._create_control_mappings()
+
+        # Create CMMC framework data
+        self._create_cmmc_framework_data()
 
         return results
 
@@ -313,6 +321,162 @@ class NISTDataDownloader:
             f.write(json.dumps(mappings_data, indent=2))
 
         logger.info("Control mappings created successfully")
+
+    def _create_cmmc_framework_data(self) -> None:
+        """Create CMMC framework data in the download script"""
+        logger.info("Creating CMMC framework data...")
+
+        # CMMC Level 1: Basic Cyber Hygiene
+        level_1_controls = [
+            "AC-1", "AC-3", "AC-5", "AC-6", "AC-18", "AC-19", "AC-20",
+            "AT-2", "AT-3", "AT-4",
+            "AU-3", "AU-6", "AU-7",
+            "CA-3",
+            "CM-5", "CM-6", "CM-7", "CM-8",
+            "IA-3", "IA-5", "IA-8",
+            "IR-6",
+            "MP-L2-3.11", "MP-L2-3.12", "MP-L2-3.13",
+            "PE-3", "PE-6", "PE-8",
+            "PS-8",
+            "RE-3",
+            "RC-5",
+            "SA-3", "SA-4", "SA-8",
+            "SC-5", "SC-7", "SC-8", "SC-13", "SC-15", "SC-16", "SC-18", "SC-20", "SC-21",
+            "SE-2",
+            "SI-2", "SI-3", "SI-4", "SI-5", "SI-7", "SI-10", "SI-12"
+        ]
+
+        # CMMC Level 2: Intermediate Cyber Hygiene
+        level_2_controls = [
+            "AC-2", "AC-4", "AC-7", "AC-17", "AC-25",
+            "AT-1",
+            "AU-1", "AU-11", "AU-12",
+            "CA-7",
+            "CM-2", "CM-4", "CM-9",
+            "CP-9",
+            "IA-2", "IA-9",
+            "IR-4",
+            "MA-2",
+            "MP-2", "MP-4", "MP-5",
+            "PE-2",
+            "PL-8",
+            "PS-3", "PS-6",
+            "PT-3",
+            "RE-2",
+            "RE-4",
+            "RS-2",
+            "SA-10", "SA-11",
+            "SC-3", "SC-10", "SC-12", "SC-17", "SC-23", "SC-31",
+            "SE-5",
+            "SI-6", "SI-8"
+        ]
+
+        # CMMC Level 3: Good Cyber Hygiene
+        level_3_controls = [
+            "AC-12", "AC-14", "AC-25",
+            "AT-5",
+            "AU-2", "AU-9", "AU-13",
+            "CA-2", "CA-5", "CA-6", "CA-9",
+            "CM-3", "CM-10", "CM-11",
+            "CP-7",
+            "IA-12", "IA-13",
+            "IR-2", "IR-8",
+            "MA-3", "MA-6",
+            "MP-3", "MP-6",
+            "PE-1",
+            "PL-2",
+            "PS-4", "PS-5",
+            "RA-2", "RA-5",
+            "SA-5", "SA-15", "SA-17",
+            "SC-2", "SC-39",
+            "SI-11", "SI-16",
+            "SR-2", "SR-3", "SR-5"
+        ]
+
+        # CMMC Level 4: Proactive
+        level_4_controls = [
+            "AC-6", "AC-21", "AC-22", "AC-23",
+            "AU-5", "AU-14",
+            "CA-8",
+            "CM-12", "CM-13",
+            "CP-2", "CP-3",
+            "IA-11", "IA-17",
+            "IR-3", "IR-7",
+            "RA-3",
+            "SA-12",
+            "SC-4", "SC-28", "SC-38",
+            "SI-14", "SI-23"
+        ]
+
+        # CMMC Level 5: Advanced / Progressive
+        level_5_controls = [
+            "AC-8", "AC-9", "AC-10", "AC-11", "AC-15", "AC-16", "AC-24",
+            "AT-5",
+            "AU-4", "AU-8", "AU-10",
+            "CA-1", "CA-4",
+            "CM-14",
+            "CP-4", "CP-8",
+            "IA-6", "IA-7", "IA-10",
+            "IR-5", "IR-9",
+            "PL-4", "PL-7",
+            "PR-4", "PR-6", "PR-8", "PR-9", "PR-10", "PR-11",
+            "RA-4"
+        ]
+
+        cmmc_framework = {
+            "framework": {
+                "name": "Cybersecurity Maturity Model Certification (CMMC)",
+                "version": "2.0",
+                "description": "CMMC framework for assessing cybersecurity maturity and capabilities",
+                "levels": [
+                    {
+                        "level": 1,
+                        "name": "Foundational",
+                        "description": "Basic Cyber Hygiene - Protect Federal Contract Information (FCI)",
+                        "controls": level_1_controls,
+                        "total_controls": len(level_1_controls)
+                    },
+                    {
+                        "level": 2,
+                        "name": "Advanced",
+                        "description": "Intermediate Cyber Hygiene - Protect Controlled Unclassified Information (CUI)",
+                        "controls": level_2_controls,
+                        "total_controls": len(level_2_controls)
+                    },
+                    {
+                        "level": 3,
+                        "name": "Expert",
+                        "description": "Good Cyber Hygiene - Protect CUI",
+                        "controls": level_3_controls,
+                        "total_controls": len(level_3_controls)
+                    },
+                    {
+                        "level": 4,
+                        "name": "Expert",
+                        "description": "Proactive Cyber Hygiene - Protect CUI",
+                        "controls": level_4_controls,
+                        "total_controls": len(level_4_controls)
+                    },
+                    {
+                        "level": 5,
+                        "name": "Expert",
+                        "description": "Advanced / Progressive Cyber Hygiene - Protect CUI",
+                        "controls": level_5_controls,
+                        "total_controls": len(level_5_controls)
+                    }
+                ]
+            }
+        }
+
+        # Create the directory and save the framework
+        framework_dir = self.data_path / "nist-sources/cmmc"
+        framework_dir.mkdir(parents=True, exist_ok=True)
+        framework_file = framework_dir / "framework.json"
+
+        with open(framework_file, "w", encoding="utf-8") as f:
+            json.dump(cmmc_framework, f, indent=2)
+
+        logger.info("CMMC framework data created successfully")
 
     def create_examples(self) -> None:
         """Create example OSCAL documents"""
