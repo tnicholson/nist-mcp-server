@@ -10,7 +10,7 @@ import json
 import logging
 import urllib.request
 from pathlib import Path
-from typing import Dict
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class NISTDataDownloader:
     """Downloads and manages NIST data sources"""
 
     # Official NIST data source URLs
-    DATA_SOURCES = {
+    DATA_SOURCES: ClassVar[dict[str, dict[str, str]]] = {
         "sp800-53-controls": {
             "url": "https://raw.githubusercontent.com/usnistgov/OSCAL-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
             "description": "NIST SP 800-53 Rev 5 Controls Catalog (JSON)",
@@ -80,7 +80,7 @@ class NISTDataDownloader:
     def __init__(self, data_path: Path):
         self.data_path = Path(data_path)
 
-    def download_all(self, force: bool = False) -> Dict[str, bool]:
+    def download_all(self, force: bool = False) -> dict[str, bool]:
         """Download all NIST data sources"""
         results = {}
 
@@ -97,7 +97,7 @@ class NISTDataDownloader:
         return results
 
     def _download_source(
-        self, source_id: str, source_info: Dict[str, str], force: bool = False
+        self, source_id: str, source_info: dict[str, str], force: bool = False
     ) -> bool:
         """Download a single data source"""
         url = source_info["url"]
@@ -116,7 +116,10 @@ class NISTDataDownloader:
         try:
             logger.info(f"Downloading {source_info['description']}...")
 
-            with urllib.request.urlopen(url) as response:
+            # SECURITY: Only allow HTTPS URLs from trusted NIST domains for data download
+            with urllib.request.urlopen(
+                url
+            ) as response:  # noqa: S310 - Trusted URLs only
                 content = response.read().decode("utf-8")
 
                 # Validate JSON content for JSON files

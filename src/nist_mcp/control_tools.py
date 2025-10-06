@@ -1,9 +1,7 @@
-"""
-Control Tools - NIST SP 800-53 control management tools
-"""
+"""Control Tools - NIST SP 800-53 control management tools"""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +12,7 @@ class ControlTools:
     def __init__(self, data_loader: Any) -> None:
         self.data_loader = data_loader
 
-    async def get_control(self, control_id: str) -> Dict[str, Any]:
+    async def get_control(self, control_id: str) -> dict[str, Any]:
         """Get detailed information about a specific control"""
         controls_data = await self.data_loader.load_controls()
 
@@ -42,8 +40,8 @@ class ControlTools:
         return enhanced_control
 
     async def search_controls(
-        self, query: str, family: Optional[str] = None, limit: int = 10
-    ) -> Dict[str, Any]:
+        self, query: str, family: str | None = None, limit: int = 10
+    ) -> dict[str, Any]:
         """Search controls by keyword or topic"""
         controls_data = await self.data_loader.load_controls()
 
@@ -84,7 +82,7 @@ class ControlTools:
             "controls": results,
         }
 
-    async def get_control_family(self, family: str) -> Dict[str, Any]:
+    async def get_control_family(self, family: str) -> dict[str, Any]:
         """Get all controls in a specific family"""
         if len(family) != 2:
             raise ValueError("Family must be 2 characters (e.g., 'AC', 'AU', 'CA')")
@@ -134,7 +132,7 @@ class ControlTools:
             "total_enhancements": len(enhancements),
         }
 
-    async def get_control_mappings(self, control_id: str) -> Dict[str, Any]:
+    async def get_control_mappings(self, control_id: str) -> dict[str, Any]:
         """Get CSF mappings for a specific control"""
         mappings_data = await self.data_loader.load_control_mappings()
 
@@ -154,25 +152,39 @@ class ControlTools:
             "total_mappings": len(mappings),
         }
 
-    async def get_control_baselines(self, baseline: str = "moderate") -> Dict[str, Any]:
+    async def get_control_baselines(self, baseline: str = "moderate") -> dict[str, Any]:
         """Get controls for a specific baseline (low, moderate, high)"""
         baseline = baseline.lower()
 
         if baseline not in ["low", "moderate", "high"]:
             raise ValueError("Baseline must be 'low', 'moderate', or 'high'")
 
+        # Load the actual baseline profiles from JSON files
+        baseline_profiles = await self.data_loader.load_baseline_profiles()
+
+        if baseline not in baseline_profiles:
+            raise ValueError(f"Baseline profile '{baseline}' not found")
+
+        # Extract control IDs from OSCAL profile format
+        baseline_control_ids = self._extract_baseline_control_ids(
+            baseline_profiles[baseline]
+        )
+
         controls_data = await self.data_loader.load_controls()
 
-        # This would typically be loaded from NIST baseline data
-        # For now, we'll create a simplified baseline mapping
-        baseline_controls = self._get_baseline_controls(baseline)
+        # Extract all controls from all groups (OSCAL catalog structure)
+        controls_db = []
+        groups = controls_data.get("catalog", {}).get("groups", [])
+        for group in groups:
+            controls_db.extend(group.get("controls", []))
 
         selected_controls = []
-        controls = controls_data.get("catalog", {}).get("controls", [])
+        found_control_ids = set()
 
-        for control in controls:
-            control_id = control.get("id", "")
-            if control_id in baseline_controls:
+        for control in controls_db:
+            control_id = control.get("id", "").upper()
+            # Check if control is in baseline (normalized to uppercase)
+            if control_id in baseline_control_ids:
                 selected_controls.append(
                     {
                         "id": control_id,
@@ -180,14 +192,24 @@ class ControlTools:
                         "family": control_id[:2],
                     }
                 )
+                found_control_ids.add(control_id)
 
-        return {
+        # Check for any baseline controls that weren't found in the controls database
+        missing_controls = baseline_control_ids - found_control_ids
+
+        result = {
             "baseline": baseline.title(),
             "total_controls": len(selected_controls),
             "controls": selected_controls,
         }
 
-    def _get_family_info(self, family: str) -> Dict[str, str]:
+        if missing_controls:
+            result["missing_controls"] = sorted(list(missing_controls))
+            result["missing_count"] = len(missing_controls)
+
+        return result
+
+    def _get_family_info(self, family: str) -> dict[str, str]:
         """Get information about a control family"""
         families = {
             "AC": {
@@ -262,124 +284,32 @@ class ControlTools:
             family.upper(), {"name": f"{family.upper()} Family", "description": ""}
         )
 
-    def _get_baseline_controls(self, baseline: str) -> List[str]:
-        """Get list of controls for a baseline (simplified mapping)"""
-        # This is a simplified baseline mapping
-        # In production, load this from official NIST baseline data
+    def _extract_baseline_control_ids(
+        self, baseline_profile: dict[str, Any]
+    ) -> set[str]:
+        """Extract control IDs from OSCAL baseline profile format"""
+        control_ids: set[str] = set()
 
-        baselines = {
-            "low": [
-                "AC-1",
-                "AC-2",
-                "AC-3",
-                "AC-7",
-                "AC-8",
-                "AC-14",
-                "AC-17",
-                "AC-18",
-                "AC-19",
-                "AC-20",
-                "AC-22",
-                "AU-1",
-                "AU-2",
-                "AU-3",
-                "AU-4",
-                "AU-5",
-                "AU-6",
-                "AU-8",
-                "AU-9",
-                "AU-11",
-                "AU-12",
-                "AT-1",
-                "AT-2",
-                "AT-3",
-                "AT-4",
-                "CM-1",
-                "CM-2",
-                "CM-4",
-                "CM-5",
-                "CM-6",
-                "CM-7",
-                "CM-8",
-                "CM-10",
-                "CM-11",
-                "CP-1",
-                "CP-2",
-                "CP-3",
-                "CP-4",
-                "CP-9",
-                "CP-10",
-            ],
-            "moderate": [
-                # Includes all low baseline controls plus additional ones
-                "AC-1",
-                "AC-2",
-                "AC-3",
-                "AC-4",
-                "AC-5",
-                "AC-6",
-                "AC-7",
-                "AC-8",
-                "AC-11",
-                "AC-12",
-                "AC-14",
-                "AC-17",
-                "AC-18",
-                "AC-19",
-                "AC-20",
-                "AC-21",
-                "AC-22",
-                "AU-1",
-                "AU-2",
-                "AU-3",
-                "AU-4",
-                "AU-5",
-                "AU-6",
-                "AU-7",
-                "AU-8",
-                "AU-9",
-                "AU-10",
-                "AU-11",
-                "AU-12",
-                "AT-1",
-                "AT-2",
-                "AT-3",
-                "AT-4",
-                "AT-5",
-                "CM-1",
-                "CM-2",
-                "CM-3",
-                "CM-4",
-                "CM-5",
-                "CM-6",
-                "CM-7",
-                "CM-8",
-                "CM-9",
-                "CM-10",
-                "CM-11",
-                "CP-1",
-                "CP-2",
-                "CP-3",
-                "CP-4",
-                "CP-6",
-                "CP-7",
-                "CP-8",
-                "CP-9",
-                "CP-10",
-            ],
-            "high": [
-                # Includes all moderate baseline controls plus high-impact specific ones
-                # This would be a much longer list in practice
-            ],
-        }
+        # Navigate OSCAL profile structure: profile.imports[0].include-controls[0].with-ids
+        imports = baseline_profile.get("profile", {}).get("imports", [])
+        if not imports:
+            return control_ids
 
-        controls = baselines.get(baseline, [])
+        include_controls = imports[0].get("include-controls", [])
+        if not include_controls:
+            return control_ids
 
-        # For moderate and high, inherit from lower baselines
-        if baseline == "moderate":
-            controls.extend(baselines["low"])
-        elif baseline == "high":
-            controls.extend(baselines["moderate"])
-            controls.extend(baselines["low"])
+        with_ids = include_controls[0].get("with-ids", [])
 
-        return list(set(controls))  # Remove duplicates
+        # Convert to uppercase and normalize format (ac-1 -> AC-1, ac-2.1 -> AC-2.1)
+        for control_id in with_ids:
+            if isinstance(control_id, str):
+                # Convert lowercase with dashes to uppercase with dashes
+                normalized_id = control_id.upper()
+                # Handle special cases like ac-2.1 -> AC-2.1
+                if "." in normalized_id:
+                    parts = normalized_id.split(".", 1)
+                    normalized_id = f"{parts[0].upper()}.{parts[1]}"
+                control_ids.add(normalized_id)
+
+        return control_ids

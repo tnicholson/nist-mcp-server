@@ -1,13 +1,11 @@
-"""
-Advanced Analysis Tools for NIST MCP Server
+"""Advanced Analysis Tools for NIST MCP Server
 
 Provides sophisticated analysis capabilities for cybersecurity frameworks.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Set
 from collections import defaultdict
-import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +17,8 @@ class NISTAnalysisTools:
         self.data_loader = data_loader
 
     async def gap_analysis(
-        self, implemented_controls: List[str], target_baseline: str = "moderate"
-    ) -> Dict[str, Any]:
+        self, implemented_controls: list[str], target_baseline: str = "moderate"
+    ) -> dict[str, Any]:
         """Perform gap analysis between implemented controls and target baseline"""
         try:
             # Load baseline controls
@@ -42,7 +40,7 @@ class NISTAnalysisTools:
             compliant_controls = implemented_set & baseline_controls
 
             # Analyze by family
-            family_analysis: Dict[str, Dict[str, Any]] = defaultdict(
+            family_analysis: dict[str, dict[str, Any]] = defaultdict(
                 lambda: {"required": 0, "implemented": 0, "missing": []}
             )
 
@@ -84,13 +82,13 @@ class NISTAnalysisTools:
             logger.error(f"Error performing gap analysis: {e}")
             raise
 
-    async def risk_assessment_helper(self, control_ids: List[str]) -> Dict[str, Any]:
+    async def risk_assessment_helper(self, control_ids: list[str]) -> dict[str, Any]:
         """Help assess risk coverage based on control selection"""
         try:
             controls_data = await self.data_loader.load_controls()
 
             # Analyze control coverage by security objective
-            security_objectives: Dict[str, List[str]] = {
+            security_objectives: dict[str, list[str]] = {
                 "confidentiality": [],
                 "integrity": [],
                 "availability": [],
@@ -118,7 +116,7 @@ class NISTAnalysisTools:
                 "program_management": ["PM"],
             }
 
-            coverage_analysis = {}
+            coverage_analysis: dict[str, dict[str, Any]] = {}
             for category, families in risk_categories.items():
                 covered_families = set()
                 control_count = 0
@@ -132,11 +130,11 @@ class NISTAnalysisTools:
                 coverage_analysis[category] = {
                     "families_covered": list(covered_families),
                     "control_count": control_count,
-                    "coverage_percentage": round(
-                        (len(covered_families) / len(families)) * 100, 2
-                    )
-                    if families
-                    else 0,
+                    "coverage_percentage": (
+                        round((len(covered_families) / len(families)) * 100, 2)
+                        if families
+                        else 0
+                    ),
                 }
 
             # Overall risk coverage score
@@ -144,7 +142,7 @@ class NISTAnalysisTools:
             covered_categories = sum(
                 1
                 for cat in coverage_analysis.values()
-                if cat.get("control_count", 0) > 0
+                if cat.get("control_count", 0) > 0  # type: ignore[operator]
             )
             overall_coverage = round((covered_categories / total_categories) * 100, 2)
 
@@ -162,8 +160,8 @@ class NISTAnalysisTools:
             raise
 
     async def compliance_mapping(
-        self, framework: str, control_ids: List[str]
-    ) -> Dict[str, Any]:
+        self, framework: str, control_ids: list[str]
+    ) -> dict[str, Any]:
         """Map controls to compliance frameworks (SOC2, ISO27001, etc.)"""
         try:
             # Simplified compliance mappings - in production, load from comprehensive mapping files
@@ -240,7 +238,7 @@ class NISTAnalysisTools:
             logger.error(f"Error in compliance mapping: {e}")
             raise
 
-    async def control_relationships(self, control_id: str) -> Dict[str, Any]:
+    async def control_relationships(self, control_id: str) -> dict[str, Any]:
         """Analyze relationships and dependencies between controls"""
         try:
             controls_data = await self.data_loader.load_controls()
@@ -288,8 +286,8 @@ class NISTAnalysisTools:
             raise
 
     def _generate_gap_recommendations(
-        self, family_analysis: Dict, missing_controls: Set[str]
-    ) -> List[str]:
+        self, family_analysis: dict, missing_controls: set[str]
+    ) -> list[str]:
         """Generate recommendations based on gap analysis"""
         recommendations = []
 
@@ -331,7 +329,7 @@ class NISTAnalysisTools:
 
         return recommendations
 
-    def _generate_risk_recommendations(self, coverage_analysis: Dict) -> List[str]:
+    def _generate_risk_recommendations(self, coverage_analysis: dict) -> list[str]:
         """Generate risk-based recommendations"""
         recommendations = []
 
@@ -349,8 +347,8 @@ class NISTAnalysisTools:
         return recommendations
 
     def _generate_compliance_recommendations(
-        self, uncovered_requirements: Dict
-    ) -> List[str]:
+        self, uncovered_requirements: dict
+    ) -> list[str]:
         """Generate compliance-focused recommendations"""
         recommendations = []
 
@@ -374,8 +372,8 @@ class NISTAnalysisTools:
         return recommendations
 
     def _find_related_controls(
-        self, control: Dict, controls_data: Dict
-    ) -> List[Dict[str, Any]]:
+        self, control: dict, controls_data: dict
+    ) -> list[dict[str, Any]]:
         """Find controls related to the given control"""
         related = []
         control_family = control.get("id", "")[:2]
@@ -385,7 +383,7 @@ class NISTAnalysisTools:
         for ctrl in all_controls:
             ctrl_id = ctrl.get("id", "")
             if ctrl_id.startswith(control_family) and ctrl_id != control.get("id", ""):
-                if not "(" in ctrl_id:  # Exclude enhancements
+                if "(" not in ctrl_id:  # Exclude enhancements
                     related.append(
                         {
                             "id": ctrl_id,
@@ -397,8 +395,8 @@ class NISTAnalysisTools:
         return related[:5]  # Limit to 5 related controls
 
     def _find_referencing_controls(
-        self, control_id: str, controls_data: Dict
-    ) -> List[Dict[str, Any]]:
+        self, control_id: str, controls_data: dict
+    ) -> list[dict[str, Any]]:
         """Find controls that reference the given control"""
         referencing = []
         all_controls = controls_data.get("catalog", {}).get("controls", [])
@@ -417,7 +415,7 @@ class NISTAnalysisTools:
 
         return referencing[:3]  # Limit to 3 referencing controls
 
-    def _extract_implementation_guidance(self, control: Dict) -> List[str]:
+    def _extract_implementation_guidance(self, control: dict) -> list[str]:
         """Extract implementation guidance from control"""
         guidance = []
 
@@ -432,7 +430,7 @@ class NISTAnalysisTools:
 
         return guidance
 
-    def _identify_critical_gaps(self, coverage_analysis: Dict) -> List[str]:
+    def _identify_critical_gaps(self, coverage_analysis: dict) -> list[str]:
         """Identify critical security gaps"""
         critical_gaps = []
 
