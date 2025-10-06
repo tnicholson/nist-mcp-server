@@ -23,6 +23,7 @@ class NISTDataLoader:
         self._baselines_cache: dict[str, Any] | None = None
         self._sp800171_baseline_cache: dict[str, Any] | None = None
         self._cmmc_cache: dict[str, Any] | None = None
+        self._fedramp_cache: dict[str, Any] | None = None
 
     async def initialize(self) -> None:
         """Initialize the data loader and verify data sources exist"""
@@ -219,6 +220,23 @@ class NISTDataLoader:
         framework_levels = self._cmmc_cache.get("framework", {}).get("levels", [])
         logger.info(f"Loaded CMMC framework with {len(framework_levels)} levels")
         return self._cmmc_cache
+
+    async def load_fedramp_framework(self, force_reload: bool = False) -> dict[str, Any]:
+        """Load FedRAMP framework data"""
+        if self._fedramp_cache is not None and not force_reload:
+            return self._fedramp_cache
+
+        # Check if we need to create FedRAMP framework data
+        fedramp_file = self.data_path / "nist-sources/fedramp/framework.json"
+        if not fedramp_file.exists():
+            self._fedramp_cache = self._create_fedramp_framework_data()
+        else:
+            async with aiofiles.open(fedramp_file, encoding="utf-8") as f:
+                content = await f.read()
+                self._fedramp_cache = json.loads(content)
+
+        logger.info("Loaded FedRAMP framework")
+        return self._fedramp_cache
 
     async def _parse_controls_xml(self, xml_file: Path) -> dict[str, dict[str, Any]]:
         """Parse controls from XML format (fallback when JSON not available)"""
@@ -547,3 +565,76 @@ class NISTDataLoader:
 
         logger.info("SP 800-171 CUI baseline fallback created")
         return sp800171_profile
+
+    def _create_fedramp_framework_data(self) -> dict[str, Any]:
+        """Create FedRAMP framework data structure"""
+        fedramp_framework = {
+            "framework": {
+                "name": "Federal Risk and Authorization Management Program (FedRAMP)",
+                "version": "Rev 4",
+                "description": "FedRAMP provides a standardized approach to security assessment, authorization, and continuous monitoring for cloud products and services",
+                "baselines": [
+                    {
+                        "level": "low",
+                        "name": "Low Impact",
+                        "description": "Low impact level baseline for systems where the loss of confidentiality, integrity, or availability could be expected to have limited adverse effects",
+                        "impact_level": "FIPS-199 Low",
+                        "controls_url": "../sp800-53/low-baseline.json"
+                    },
+                    {
+                        "level": "moderate",
+                        "name": "Moderate Impact",
+                        "description": "Moderate impact level baseline for systems where the loss of confidentiality, integrity, or availability could be expected to have serious adverse effects",
+                        "impact_level": "FIPS-199 Moderate",
+                        "controls_url": "../sp800-53/moderate-baseline.json"
+                    },
+                    {
+                        "level": "high",
+                        "name": "High Impact",
+                        "description": "High impact level baseline for systems where the loss of confidentiality, integrity, or availability could be expected to have severe or catastrophic adverse effects",
+                        "impact_level": "FIPS-199 High",
+                        "controls_url": "../sp800-53/high-baseline.json"
+                    }
+                ],
+                "authorization_types": [
+                    {
+                        "type": "JAB",
+                        "name": "JAB Authorization",
+                        "description": "Joint Authorization Board authorization for widely-used cloud services",
+                        "pathways": ["Priority", "General"]
+                    },
+                    {
+                        "type": "Agency",
+                        "name": "Agency Authorization",
+                        "description": "Individual agency authorization for specific use cases",
+                        "pathways": ["Priority", "General"]
+                    }
+                ],
+                "requirements": {
+                    "cloud_service_providers": [
+                        "Develop and maintain System Security Plans (SSP)",
+                        "Implement NIST SP 800-53 security controls",
+                        "Conduct ongoing security assessments",
+                        "Provide continuous monitoring capabilities",
+                        "Support agency authorization reviews"
+                    ],
+                    "agencies": [
+                        "Conduct risk assessments for cloud migrations",
+                        "Review and accept FedRAMP authorizations",
+                        "Maintain oversight of authorized cloud services",
+                        "Ensure continuous monitoring of operations"
+                    ]
+                }
+            }
+        }
+
+        # Create the directory and save the framework
+        framework_dir = self.data_path / "nist-sources/fedramp"
+        framework_dir.mkdir(parents=True, exist_ok=True)
+        framework_file = framework_dir / "framework.json"
+
+        with open(framework_file, "w", encoding="utf-8") as f:
+            json.dump(fedramp_framework, f, indent=2)
+
+        logger.info("FedRAMP framework data created")
+        return fedramp_framework

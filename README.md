@@ -22,6 +22,12 @@ A Model Context Protocol (MCP) server providing comprehensive access to NIST cyb
 - Compliance evaluation against target maturity levels
 - CMMC level progress tracking and gap analysis
 
+### ☁️ Federal Risk and Authorization Management Program (FedRAMP)
+- FedRAMP Rev 4 framework structure and requirements
+- Impact level baselines (Low, Moderate, High) based on FIPS-199
+- Cloud service provider readiness assessments
+- Authorization pathway guidance and recommendations
+
 ### 🛡️ NIST Cybersecurity Framework 2.0
 - Complete CSF functions: Identify, Protect, Detect, Respond, Recover
 - Categories and subcategories with detailed descriptions
@@ -123,6 +129,11 @@ The server provides the following MCP tools for AI assistants:
 - `get_cmmc_level(level)` - Get controls for specific CMMC level (1-5)
 - `cmmc_compliance_assessment(implemented_controls, target_level)` - Assess CMMC compliance
 
+### FedRAMP Framework
+- `get_fedramp_framework()` - Get complete FedRAMP framework structure
+- `get_fedramp_baseline(impact_level)` - Get FedRAMP controls for specific impact level
+- `fedramp_readiness_assessment(implemented_controls, service_model)` - Assess FedRAMP readiness
+
 ### Advanced Analysis
 - `gap_analysis(implemented_controls, target_baseline)` - Perform compliance gap analysis
 - `risk_assessment_helper(control_ids)` - Assess risk coverage of control selection
@@ -154,12 +165,13 @@ nist-mcp/
 │   │   ├── sp800-53/       # SP 800-53 controls and baselines
 │   │   ├── sp800-171/      # SP 800-171 CUI baseline profiles
 │   │   ├── cmmc/           # CMMC framework and maturity levels
+│   │   ├── fedramp/        # FedRAMP framework and impact levels
 │   │   ├── csf/            # Cybersecurity Framework data
 │   │   └── mappings/       # Control-to-CSF mappings
 │   ├── oscal-schemas/      # OSCAL JSON schemas
 │   └── examples/           # Example OSCAL documents
 ├── scripts/                # Utility scripts
-│   └── download_nist_data.py # Data download script and CMMC creation
+│   └── download_nist_data.py # Data download script and framework creation
 ├── tools/                  # Additional control tools
 │   └── control_tools.py    # Control management utilities
 └── tests/                  # Test suite

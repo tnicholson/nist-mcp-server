@@ -439,6 +439,163 @@ async def cmmc_compliance_assessment(
 
 
 @app.tool()
+async def get_fedramp_framework() -> dict[str, Any]:
+    """Get the complete FedRAMP framework structure"""
+    try:
+        fedramp_data = await nist_server.loader.load_fedramp_framework()
+        return fedramp_data
+    except Exception as e:
+        logger.error(f"Error loading FedRAMP framework: {e}")
+        raise
+
+
+@app.tool()
+async def get_fedramp_baseline(impact_level: str) -> dict[str, Any]:
+    """Get FedRAMP controls for a specific impact level (low, moderate, high)"""
+    impact_level = impact_level.lower()
+    if impact_level not in ["low", "moderate", "high"]:
+        raise ValueError("Impact level must be 'low', 'moderate', or 'high'")
+
+    try:
+        fedramp_data = await nist_server.loader.load_fedramp_framework()
+
+        # Find the matching baseline
+        target_baseline = None
+        for baseline in fedramp_data.get("framework", {}).get("baselines", []):
+            if baseline.get("level", "").lower() == impact_level:
+                target_baseline = baseline
+                break
+
+        if not target_baseline:
+            raise ValueError(f"FedRAMP baseline not found for impact level: {impact_level}")
+
+        # Load the corresponding SP 800-53 baseline profile
+        if impact_level == "low":
+            baseline_data = await nist_server.loader.load_baseline_profiles()
+            baseline_profile = baseline_data.get("low", {})
+        elif impact_level == "moderate":
+            baseline_data = await nist_server.loader.load_baseline_profiles()
+            baseline_profile = baseline_data.get("moderate", {})
+        else:  # high
+            baseline_data = await nist_server.loader.load_baseline_profiles()
+            baseline_profile = baseline_data.get("high", {})
+
+        # Extract control IDs from OSCAL profile format
+        control_ids = []
+        if baseline_profile:
+            imports = baseline_profile.get("profile", {}).get("imports", [])
+            if imports:
+                include_controls = imports[0].get("include-controls", [])
+                if include_controls:
+                    with_ids = include_controls[0].get("with-ids", [])
+                    control_ids = [control_id for control_id in with_ids if isinstance(control_id, str)]
+
+        controls_data = await nist_server.loader.load_controls()
+
+        # Get control details for baseline controls
+        baseline_controls = []
+        found_control_ids = set()
+
+        for group in controls_data.get("catalog", {}).get("groups", []):
+            for control in group.get("controls", []):
+                control_id = control.get("id", "").upper()
+                if control_id in [cid.upper() for cid in control_ids]:
+                    baseline_controls.append({
+                        "id": control_id,
+                        "title": control.get("title", ""),
+                        "family": control_id[:2],
+                        "class": "FedRAMP"
+                    })
+                    found_control_ids.add(control_id)
+
+        return {
+            "baseline": f"FedRAMP {impact_level.title()} Impact",
+            "impact_level": target_baseline.get("impact_level", ""),
+            "description": target_baseline.get("description", ""),
+            "total_controls": len(baseline_controls),
+            "controls": baseline_controls,
+        }
+    except Exception as e:
+        logger.error(f"Error loading FedRAMP baseline {impact_level}: {e}")
+        raise
+
+
+@app.tool()
+async def fedramp_readiness_assessment(
+    implemented_controls: list[str], service_model: str = "saas"
+) -> dict[str, Any]:
+    """Perform FedRAMP readiness assessment for cloud service providers"""
+    service_model = service_model.lower()
+    if service_model not in ["saas", "paas", "iaas"]:
+        raise ValueError("Service model must be 'saas', 'paas', or 'iaas'")
+
+    try:
+        fedramp_data = await nist_server.loader.load_fedramp_framework()
+
+        # For simplicity, we'll use the moderate baseline as the primary assessment
+        # In practice, this would be more sophisticated based on the service model
+        baseline_data = await nist_server.loader.load_baseline_profiles()
+        moderate_profile = baseline_data.get("moderate", {})
+
+        # Extract required control IDs from OSCAL profile
+        required_control_ids = set()
+        if moderate_profile:
+            imports = moderate_profile.get("profile", {}).get("imports", [])
+            if imports:
+                include_controls = imports[0].get("include-controls", [])
+                if include_controls:
+                    with_ids = include_controls[0].get("with-ids", [])
+                    required_control_ids = set(with_ids)
+
+        implemented_controls_upper = [cid.upper() for cid in implemented_controls]
+
+        # Assess implementation
+        implemented_count = len([cid for cid in implemented_controls_upper if cid in required_control_ids])
+        total_required = len(required_control_ids)
+        missing_count = total_required - implemented_count
+
+        compliance_percentage = round((implemented_count / total_required) * 100, 2)
+
+        # Determine readiness level
+        if compliance_percentage >= 95:
+            readiness = "Ready for Authorization"
+            pathways = ["Priority", "General (JAB)", "Agency"]
+        elif compliance_percentage >= 85:
+            readiness = "High Readiness"
+            pathways = ["General (JAB)", "Agency"]
+        elif compliance_percentage >= 75:
+            readiness = "Medium Readiness"
+            pathways = ["Agency"]
+        else:
+            readiness = "Low Readiness"
+            pathways = ["Not yet ready for authorization"]
+
+        return {
+            "assessment": {
+                "service_model": service_model.upper(),
+                "target_baseline": "Moderate Impact",
+                "current_compliance_percentage": f"{compliance_percentage}%",
+                "implemented_controls": implemented_count,
+                "total_required_controls": total_required,
+                "missing_controls": missing_count,
+                "readiness_level": readiness,
+                "available_pathways": pathways
+            },
+            "fedramp_requirements": fedramp_data.get("framework", {}).get("requirements", {}),
+            "recommendations": [
+                f"Achieve at least 75% compliance before pursuing authorization (currently {compliance_percentage}%)",
+                f"Focus on implementing missing {missing_count} controls",
+                f"For {service_model.upper()} services, consider the guidance in FedRAMP Rev 4",
+                "Develop comprehensive System Security Plan (SSP)",
+                "Prepare for continuous monitoring requirements"
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error performing FedRAMP readiness assessment: {e}")
+        raise
+
+
+@app.tool()
 async def validate_oscal_document(
     document: dict[str, Any], document_type: str = "catalog"
 ) -> dict[str, Any]:
