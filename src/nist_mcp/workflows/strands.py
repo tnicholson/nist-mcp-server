@@ -12,6 +12,7 @@ from enum import Enum
 
 from ..history.storage import HistoricalStorage
 from ..monitoring.monitor import ControlMonitor
+from ..data.loader import NISTDataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ class WorkflowStrand:
         steps: List[WorkflowStep],
         storage: HistoricalStorage,
         monitor: Optional[ControlMonitor] = None,
+        data_loader: Optional[NISTDataLoader] = None,
     ):
         self.strand_id = strand_id
         self.name = name
@@ -120,6 +122,7 @@ class WorkflowStrand:
         self.steps = {step.step_id: step for step in steps}
         self.storage = storage
         self.monitor = monitor
+        self.data_loader = data_loader
         self.status = WorkflowStatus.PENDING
         self.context = {}
         self.created_at = datetime.now()
@@ -164,6 +167,8 @@ class WorkflowStrand:
                 "start_time": start_time.isoformat(),
                 "results": {},
                 "errors": [],
+                "data_loader": self.data_loader,
+                "monitor": self.monitor,
             }
 
             # Execute steps in dependency order
@@ -281,10 +286,14 @@ class StrandsOrchestrator:
     """Main orchestrator for compliance workflow strands"""
 
     def __init__(
-        self, storage: HistoricalStorage, monitor: Optional[ControlMonitor] = None
+        self,
+        storage: HistoricalStorage,
+        monitor: Optional[ControlMonitor] = None,
+        data_loader: Optional[NISTDataLoader] = None,
     ):
         self.storage = storage
         self.monitor = monitor
+        self.data_loader = data_loader
         self.active_strands: Dict[str, WorkflowStrand] = {}
         self.strand_definitions: Dict[str, Dict[str, Any]] = {}
 
@@ -325,6 +334,7 @@ class StrandsOrchestrator:
             steps=steps,
             storage=self.storage,
             monitor=self.monitor,
+            data_loader=self.data_loader,
         )
 
         self.active_strands[strand_id] = strand
@@ -376,10 +386,12 @@ async def gap_analysis_step(
     context: Dict[str, Any], baseline: str = "moderate"
 ) -> Dict[str, Any]:
     """Step to perform gap analysis"""
+    data_loader = context.get("data_loader")
+    if not data_loader:
+        raise ValueError("Data loader not provided in workflow context")
+
     from ..analysis_tools import NISTAnalysisTools
 
-    # This would be injected - for now, create a placeholder
-    data_loader = None  # TODO: Inject properly
     analysis = NISTAnalysisTools(data_loader)
     target_controls = context.get("target_controls", [])
 
