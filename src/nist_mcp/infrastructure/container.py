@@ -8,6 +8,7 @@ from ..data.loader import NISTDataLoader
 from ..history.storage import HistoricalStorage
 from ..monitoring.monitor import ControlMonitor
 from ..workflows.strands import StrandsOrchestrator
+from ..services.control_service import ControlService
 from ..connectors.base import connector_registry
 from ..connectors.aws import AWSConnector
 
@@ -68,9 +69,12 @@ class DependencyContainer:
             self._services["data_loader"] = NISTDataLoader(self.config.data_path)
             await self._services["data_loader"].initialize()
 
+            # Initialize control service
+            self._services["control_service"] = ControlService(self._services["data_loader"])
+
             # Initialize storage service
             self._services["storage"] = HistoricalStorage()
-            await self._services["storage"].initialize()
+            self._services["storage"].initialize()
 
             # Initialize monitor if enabled
             if self.config.enable_monitoring:
@@ -121,6 +125,12 @@ class DependencyContainer:
         if not self._initialized:
             await self.initialize()
         return self._services["data_loader"]
+
+    async def get_control_service(self) -> ControlService:
+        """Get the control service"""
+        if not self._initialized:
+            await self.initialize()
+        return self._services["control_service"]
 
     async def get_storage_service(self) -> HistoricalStorage:
         """Get the historical storage service"""

@@ -34,18 +34,33 @@ nist_server = NISTMCPServer()
 
 @asynccontextmanager
 async def lifespan(app: FastMCP) -> AsyncIterator[None]:
+    # Initialize data loader
     await nist_server.loader.initialize()
+
+    # Initialize dependency injection container with correct data path
+    from .infrastructure.container import DependencyContainer, AppConfig
+    config = AppConfig(data_path=nist_server.data_path)
+    container = DependencyContainer(config)
+    await container.initialize()
+
+    # Set as global container for service access
+    from .infrastructure.container import set_container
+    set_container(container)
+
+    # Register all endpoint modules (async now for control endpoints)
+    await register_control_endpoints(app, nist_server.loader)
+    register_analysis_endpoints(app, nist_server.loader)
+    register_framework_endpoints(app, nist_server.loader)
+    register_monitoring_endpoints(app, nist_server.loader)
+
     yield
+
+    # Cleanup on shutdown
+    await container.shutdown()
 
 
 # Create MCP server
 app = FastMCP("nist-mcp-server", lifespan=lifespan)
-
-# Register all endpoint modules
-register_control_endpoints(app, nist_server.loader)
-register_analysis_endpoints(app, nist_server.loader)
-register_framework_endpoints(app, nist_server.loader)
-register_monitoring_endpoints(app, nist_server.loader)
 
 
 def main() -> None:
