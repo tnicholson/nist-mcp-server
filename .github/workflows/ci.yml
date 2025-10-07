@@ -91,7 +91,7 @@ jobs:
 
     - name: Test server initialization
       run: |
-        python -c "
+        uv run python -c "
         import sys
         sys.path.append('src')
         from nist_mcp.server import NISTMCPServer
