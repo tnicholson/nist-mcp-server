@@ -185,18 +185,18 @@ class ControlMonitor:
         # For now, we'll simulate a check based on predetermined logic
 
         # Simulate different check results based on control ID for demonstration
-        import random
+        import secrets
 
         # Default success for basic controls, mixed results for complex ones
         if control_id in ["AC-1", "AU-1", "AT-1"]:
             status = "pass"
-            confidence = random.uniform(0.8, 1.0)
+            confidence = 0.8 + secrets.randbelow(200) / 1000  # 0.8 to 1.0
         elif control_id.startswith("CM-") or control_id.startswith("IA-"):
-            status = random.choice(["pass", "warning"])
-            confidence = random.uniform(0.5, 0.9)
+            status = ["pass", "warning"][secrets.randbelow(2)]
+            confidence = 0.5 + secrets.randbelow(400) / 1000  # 0.5 to 0.9
         else:
-            status = random.choice(["pass", "fail", "warning"])
-            confidence = random.uniform(0.3, 0.8)
+            status = ["pass", "fail", "warning"][secrets.randbelow(3)]
+            confidence = 0.3 + secrets.randbelow(500) / 1000  # 0.3 to 0.8
 
         return {
             "status": status,

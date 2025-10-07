@@ -26,7 +26,31 @@ class NISTMCPServer:
             data_path = Path(__file__).parent.parent.parent / "data"
         self.data_path = data_path
         self.loader = NISTDataLoader(self.data_path)
+        self._control_service = None
         logger.info(f"NIST MCP Server initialized with data path: {data_path}")
+
+    async def _get_control_service(self):
+        """Lazy initialization of control service"""
+        if self._control_service is None:
+            from .infrastructure.container import DependencyContainer, AppConfig
+            config = AppConfig(data_path=self.data_path)
+            container = DependencyContainer(config)
+            await container.initialize()
+            self._control_service = await container.get_control_service()
+        return self._control_service
+
+    async def list_nist_controls(self) -> list[dict]:
+        """List all available NIST controls (test compatibility method)"""
+        service = await self._get_control_service()
+        return await service.list_controls()
+
+    async def get_control_details(self, control_id: str) -> dict | None:
+        """Get details for a specific NIST control (test compatibility method)"""
+        service = await self._get_control_service()
+        try:
+            return await service.get_control(control_id)
+        except Exception:
+            return None
 
 
 nist_server = NISTMCPServer()

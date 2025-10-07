@@ -139,12 +139,12 @@ class TestPerformance:
             # First call - should load data
             start_time = time.time()
             result1 = await server.list_nist_controls()
-            first_call_time = time.time() - start_time
+            time.time() - start_time  # first_call_time not used
 
             # Second call - should use cache (if implemented)
             start_time = time.time()
             result2 = await server.list_nist_controls()
-            second_call_time = time.time() - start_time
+            time.time() - start_time  # second_call_time not used
 
             assert result1 == result2
             # Note: This test assumes caching is implemented
@@ -301,8 +301,9 @@ class TestResourceUsage:
             large_control["parts"].append(
                 {
                     "name": f"part-{i}",
-                    "prose": "This is a very long prose section that contains substantial content. "
-                    * 20,
+                    "prose": (
+                        "This is a very long prose section that contains substantial content. "
+                    ) * 20,
                 }
             )
 

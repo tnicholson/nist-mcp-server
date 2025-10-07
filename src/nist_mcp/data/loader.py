@@ -318,15 +318,22 @@ class NISTDataLoader:
     def get_control_by_id(
         self, controls_data: dict[str, Any], control_id: str
     ) -> dict[str, Any] | None:
-        """Find a specific control by ID"""
+        """Find a specific control by ID (including enhancements)"""
         # Controls are nested in groups in OSCAL format
         groups = controls_data.get("catalog", {}).get("groups", [])
 
         for group in groups:
             controls = group.get("controls", [])
             for control in controls:
+                # Check the base control
                 if control.get("id", "").upper() == control_id.upper():
                     return control
+
+                # Check enhancements nested within the control
+                enhancements = control.get("controls", [])
+                for enhancement in enhancements:
+                    if enhancement.get("id", "").upper() == control_id.upper():
+                        return enhancement
 
         return None
 
@@ -379,13 +386,15 @@ class NISTDataLoader:
         # Controls are nested in groups in OSCAL format
         family_controls = []
         family_upper = family.upper()
+        family_lower = family.lower()
 
         groups = controls_data.get("catalog", {}).get("groups", [])
         for group in groups:
             controls = group.get("controls", [])
             for control in controls:
                 control_id = control.get("id", "")
-                if control_id.startswith(family_upper):
+                # Check case-insensitively - controls may be stored as "ac-1" or "AC-1"
+                if control_id.upper().startswith(family_upper) or control_id.lower().startswith(family_lower):
                     family_controls.append(control)
 
         return family_controls

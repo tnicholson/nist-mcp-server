@@ -81,8 +81,6 @@ class TestInputValidation:
 
     def test_json_parsing_security(self):
         """Test JSON parsing security against malicious payloads"""
-        loader = NISTDataLoader(Path("/test"))
-
         # Test various malicious JSON payloads
         malicious_json_payloads = [
             '{"__proto__": {"isAdmin": true}}',  # Prototype pollution
@@ -94,7 +92,7 @@ class TestInputValidation:
         for payload in malicious_json_payloads:
             try:
                 # Should handle malicious JSON safely
-                parsed = json.loads(payload)
+                json.loads(payload)
                 # Verify no prototype pollution occurred
                 assert not hasattr({}, "isAdmin")
             except (json.JSONDecodeError, MemoryError):
@@ -209,13 +207,13 @@ class TestDataIntegrity:
         # Test valid IDs
         for valid_id in valid_ids:
             # Should handle valid IDs without issues
-            result = loader.get_control_by_id(controls_data, valid_id)
+            loader.get_control_by_id(controls_data, valid_id)
             # Result can be None if control doesn't exist, but no exception should occur
 
         # Test invalid IDs
         for invalid_id in invalid_ids:
             # Should handle invalid IDs gracefully
-            result = loader.get_control_by_id(controls_data, invalid_id)
+            loader.get_control_by_id(controls_data, invalid_id)
             # Should return None for invalid/non-existent IDs
 
 
@@ -227,29 +225,30 @@ class TestNetworkSecurity:
         """Test URL validation in download operations"""
         from scripts.download_nist_data import NISTDataDownloader
 
-        downloader = NISTDataDownloader(Path("/test"))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloader = NISTDataDownloader(Path(temp_dir))
 
-        # Test with malicious URLs
-        malicious_sources = {
-            "malicious": {
-                "url": "file:///etc/passwd",
-                "description": "Local file access attempt",
-                "path": "test.json",
-            },
-            "redirect": {
-                "url": "http://evil.com/redirect",
-                "description": "Malicious redirect",
-                "path": "test.json",
-            },
-        }
+            # Test with malicious URLs
+            malicious_sources = {
+                "malicious": {
+                    "url": "file:///etc/passwd",
+                    "description": "Local file access attempt",
+                    "path": "test.json",
+                },
+                "redirect": {
+                    "url": "http://evil.com/redirect",
+                    "description": "Malicious redirect",
+                    "path": "test.json",
+                },
+            }
 
-        for source_id, source_info in malicious_sources.items():
-            # Should validate URLs and reject malicious ones
-            with patch("urllib.request.urlopen") as mock_urlopen:
-                mock_urlopen.side_effect = Exception("Blocked malicious URL")
+            for source_id, source_info in malicious_sources.items():
+                # Should validate URLs and reject malicious ones
+                with patch("urllib.request.urlopen") as mock_urlopen:
+                    mock_urlopen.side_effect = Exception("Blocked malicious URL")
 
-                result = downloader._download_source(source_id, source_info, force=True)
-                assert result is False  # Should fail for malicious URLs
+                    result = downloader._download_source(source_id, source_info, force=True)
+                    assert result is False  # Should fail for malicious URLs
 
     def test_https_enforcement(self):
         """Test that HTTPS is enforced for downloads"""

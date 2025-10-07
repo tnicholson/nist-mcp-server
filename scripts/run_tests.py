@@ -19,9 +19,11 @@ def run_command(cmd, description, capture_output=True):
 
     try:
         start_time = time.time()
+        # Use shell=False to avoid security issues, split command into list
+        if isinstance(cmd, str):
+            cmd = cmd.split()
         result = subprocess.run(
             cmd,
-            shell=True,
             capture_output=capture_output,
             text=True,
             cwd=Path(__file__).parent.parent,

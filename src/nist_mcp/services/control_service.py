@@ -15,19 +15,37 @@ class ControlService:
         self.data_loader = data_loader
 
     async def list_controls(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """List all available NIST controls"""
+        """List all available NIST controls including enhancements"""
         try:
             controls_data = await self.data_loader.load_controls()
-            controls = controls_data.get("catalog", {}).get("controls", [])
+
+            # OSCAL structure: controls are nested in groups, not directly in catalog
+            # Include both base controls and their enhancements
+            all_controls = []
+            groups = controls_data.get("catalog", {}).get("groups", [])
+
+            for group in groups:
+                group_controls = group.get("controls", [])
+                for control in group_controls:
+                    # Add the base control
+                    all_controls.append({
+                        "id": control.get("id", ""),
+                        "title": control.get("title", "")
+                    })
+
+                    # Add any enhancements nested within the control
+                    enhancements = control.get("controls", [])
+                    for enhancement in enhancements:
+                        all_controls.append({
+                            "id": enhancement.get("id", ""),
+                            "title": enhancement.get("title", "")
+                        })
 
             # Apply limit if specified
             if limit and limit > 0:
-                controls = controls[:limit]
+                all_controls = all_controls[:limit]
 
-            return [
-                {"id": control["id"], "title": control["title"]}
-                for control in controls
-            ]
+            return all_controls
         except Exception as e:
             logger.error(f"Error loading controls: {e}")
             return []

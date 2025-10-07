@@ -305,19 +305,21 @@ class HistoricalStorage:
 
     def get_monitoring_status(self, control_ids: List[str]) -> Dict[str, Any]:
         """Get current monitoring status for controls"""
+        # Avoid SQL injection by using parameterized queries
         placeholders = ",".join("?" * len(control_ids))
+        query = f"""
+            SELECT
+                control_id,
+                status,
+                timestamp,
+                ROW_NUMBER() OVER (PARTITION BY control_id ORDER BY timestamp DESC) as rn
+            FROM monitoring_checks
+            WHERE control_id IN ({placeholders}) AND timestamp >= ?
+        """
 
         with self._connect() as conn:
             rows = conn.execute(
-                f"""
-                SELECT
-                    control_id,
-                    status,
-                    timestamp,
-                    ROW_NUMBER() OVER (PARTITION BY control_id ORDER BY timestamp DESC) as rn
-                FROM monitoring_checks
-                WHERE control_id IN ({placeholders}) AND timestamp >= ?
-            """,
+                query,
                 control_ids + [(datetime.now() - timedelta(days=30)).isoformat()],
             ).fetchall()
 
