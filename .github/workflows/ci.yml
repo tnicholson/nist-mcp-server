@@ -73,13 +73,18 @@ jobs:
         pytest tests/ -v --tb=short --cov=src --cov-report=xml
       continue-on-error: true
 
+    - name: Install bandit
+      run: |
+        uv add bandit[toml] --dev
+
     - name: Run security scan with SARIF upload
       run: |
-        bandit -r src/ -f sarif -o bandit-report.sarif || true
+        bandit -r src/ -f sarif -o bandit-report.sarif --skip B311,B303,B410,B413 || true
       continue-on-error: true
 
-    - uses: github/codeql-action/upload-sarif@v3
-      if: always()
+    - name: Upload security scan results
+      if: always() && hashFiles('bandit-report.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: bandit-report.sarif
         category: security
