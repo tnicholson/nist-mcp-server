@@ -128,13 +128,9 @@ jobs:
       run: |
         uv sync --dev
 
-    - name: Install build dependencies
-      run: |
-        uv sync --group build || uv add build
-
     - name: Build package
       run: |
-        python -m build
+        uv run python -m build
 
     - name: Check package
       run: |
