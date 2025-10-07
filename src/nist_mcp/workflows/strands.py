@@ -45,7 +45,7 @@ class WorkflowStep:
         depends_on: List[str] = None,
         condition: Callable[[Dict[str, Any]], bool] = None,
         retry_count: int = 0,
-        timeout_seconds: int = 300
+        timeout_seconds: int = 300,
     ):
         self.step_id = step_id
         self.step_type = step_type
@@ -77,7 +77,7 @@ class WorkflowStep:
             # Execute the action with timeout
             result = await asyncio.wait_for(
                 self.action(workflow_context, **self.parameters),
-                timeout=self.timeout_seconds
+                timeout=self.timeout_seconds,
             )
 
             self.status = StepStatus.COMPLETED
@@ -111,7 +111,7 @@ class WorkflowStrand:
         target_controls: List[str],
         steps: List[WorkflowStep],
         storage: HistoricalStorage,
-        monitor: Optional[ControlMonitor] = None
+        monitor: Optional[ControlMonitor] = None,
     ):
         self.strand_id = strand_id
         self.name = name
@@ -128,7 +128,11 @@ class WorkflowStrand:
 
     def get_executable_steps(self) -> List[WorkflowStep]:
         """Get steps that are ready to execute (dependencies met)"""
-        completed_step_ids = {sid for sid, step in self.steps.items() if step.status == StepStatus.COMPLETED}
+        completed_step_ids = {
+            sid
+            for sid, step in self.steps.items()
+            if step.status == StepStatus.COMPLETED
+        }
         executable = []
 
         for step in self.steps.values():
@@ -146,10 +150,9 @@ class WorkflowStrand:
         start_time = datetime.now()
 
         # Record workflow start
-        self.storage.record_workflow_run({
-            "workflow_id": self.strand_id,
-            "status": "running"
-        })
+        self.storage.record_workflow_run(
+            {"workflow_id": self.strand_id, "status": "running"}
+        )
 
         try:
             logger.info(f"Starting workflow strand {self.strand_id}: {self.name}")
@@ -160,7 +163,7 @@ class WorkflowStrand:
                 "target_controls": self.target_controls,
                 "start_time": start_time.isoformat(),
                 "results": {},
-                "errors": []
+                "errors": [],
             }
 
             # Execute steps in dependency order
@@ -178,11 +181,15 @@ class WorkflowStrand:
 
                     # Check for failures that block progress
                     failed_steps = [
-                        step for step in self.steps.values()
-                        if step.status == StepStatus.FAILED and step.retry_count >= step.attempts
+                        step
+                        for step in self.steps.values()
+                        if step.status == StepStatus.FAILED
+                        and step.retry_count >= step.attempts
                     ]
                     if failed_steps:
-                        raise Exception(f"Unresolved failures in steps: {[s.step_id for s in failed_steps]}")
+                        raise Exception(
+                            f"Unresolved failures in steps: {[s.step_id for s in failed_steps]}"
+                        )
 
                     # Wait briefly and check again
                     await asyncio.sleep(1)
@@ -200,7 +207,10 @@ class WorkflowStrand:
                         step.status = StepStatus.FAILED
                         step.error = str(result)
                         self.errors.append(f"Step {step_id}: {result}")
-                        self.context["results"][step_id] = {"status": "error", "error": str(result)}
+                        self.context["results"][step_id] = {
+                            "status": "error",
+                            "error": str(result),
+                        }
                     else:
                         self.context["results"][step_id] = result
 
@@ -209,11 +219,13 @@ class WorkflowStrand:
             self.completed_at = datetime.now()
 
             # Record final results
-            self.storage.record_workflow_run({
-                "workflow_id": self.strand_id,
-                "status": "completed",
-                "results": self._generate_final_results()
-            })
+            self.storage.record_workflow_run(
+                {
+                    "workflow_id": self.strand_id,
+                    "status": "completed",
+                    "results": self._generate_final_results(),
+                }
+            )
 
             logger.info(f"Workflow strand {self.strand_id} completed successfully")
             return self._generate_final_results()
@@ -223,11 +235,13 @@ class WorkflowStrand:
             self.completed_at = datetime.now()
             error_msg = f"Workflow failed: {str(e)}"
 
-            self.storage.record_workflow_run({
-                "workflow_id": self.strand_id,
-                "status": "failed",
-                "error_message": error_msg
-            })
+            self.storage.record_workflow_run(
+                {
+                    "workflow_id": self.strand_id,
+                    "status": "failed",
+                    "error_message": error_msg,
+                }
+            )
 
             logger.error(f"Workflow strand {self.strand_id} failed: {e}")
             raise
@@ -241,7 +255,9 @@ class WorkflowStrand:
                 "result": step.result,
                 "error": step.error,
                 "attempts": step.attempts,
-                "completed_at": step.completed_at.isoformat() if step.completed_at else None
+                "completed_at": step.completed_at.isoformat()
+                if step.completed_at
+                else None,
             }
 
         return {
@@ -252,15 +268,21 @@ class WorkflowStrand:
             "step_results": step_results,
             "context": self.context,
             "errors": self.errors,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "duration_seconds": (self.completed_at - self.created_at).total_seconds() if self.completed_at else None
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
+            "duration_seconds": (self.completed_at - self.created_at).total_seconds()
+            if self.completed_at
+            else None,
         }
 
 
 class StrandsOrchestrator:
     """Main orchestrator for compliance workflow strands"""
 
-    def __init__(self, storage: HistoricalStorage, monitor: Optional[ControlMonitor] = None):
+    def __init__(
+        self, storage: HistoricalStorage, monitor: Optional[ControlMonitor] = None
+    ):
         self.storage = storage
         self.monitor = monitor
         self.active_strands: Dict[str, WorkflowStrand] = {}
@@ -271,22 +293,19 @@ class StrandsOrchestrator:
         strand_type: str,
         name: str,
         description: str,
-        step_builder: Callable[[List[str]], List[WorkflowStep]]
+        step_builder: Callable[[List[str]], List[WorkflowStep]],
     ) -> None:
         """Register a reusable strand definition"""
         self.strand_definitions[strand_type] = {
             "name": name,
             "description": description,
-            "step_builder": step_builder
+            "step_builder": step_builder,
         }
 
         logger.info(f"Registered strand definition: {strand_type}")
 
     def create_strand(
-        self,
-        strand_type: str,
-        target_controls: List[str],
-        **kwargs
+        self, strand_type: str, target_controls: List[str], **kwargs
     ) -> WorkflowStrand:
         """Create a new workflow strand"""
         if strand_type not in self.strand_definitions:
@@ -305,7 +324,7 @@ class StrandsOrchestrator:
             target_controls=target_controls,
             steps=steps,
             storage=self.storage,
-            monitor=self.monitor
+            monitor=self.monitor,
         )
 
         self.active_strands[strand_id] = strand
@@ -329,9 +348,16 @@ class StrandsOrchestrator:
                 "strand_id": strand_id,
                 "name": strand.name,
                 "status": strand.status.value,
-                "progress": len([s for s in strand.steps.values() if s.status == StepStatus.COMPLETED]) / len(strand.steps),
+                "progress": len(
+                    [
+                        s
+                        for s in strand.steps.values()
+                        if s.status == StepStatus.COMPLETED
+                    ]
+                )
+                / len(strand.steps),
                 "target_controls": strand.target_controls,
-                "errors": strand.errors
+                "errors": strand.errors,
             }
         return None
 
@@ -345,7 +371,10 @@ class StrandsOrchestrator:
 
 # Predefined strand types and their step builders
 
-async def gap_analysis_step(context: Dict[str, Any], baseline: str = "moderate") -> Dict[str, Any]:
+
+async def gap_analysis_step(
+    context: Dict[str, Any], baseline: str = "moderate"
+) -> Dict[str, Any]:
     """Step to perform gap analysis"""
     from ..analysis_tools import NISTAnalysisTools
 
@@ -355,21 +384,21 @@ async def gap_analysis_step(context: Dict[str, Any], baseline: str = "moderate")
     target_controls = context.get("target_controls", [])
 
     # Simulate implemented controls (in practice, this would come from evidence)
-    implemented_controls = [ctrl for ctrl in target_controls if hash(ctrl) % 3 != 0]  # Random simulation
+    implemented_controls = [
+        ctrl for ctrl in target_controls if hash(ctrl) % 3 != 0
+    ]  # Random simulation
 
     result = await analysis.gap_analysis(implemented_controls, baseline)
 
     # Update context with results
     context["gap_analysis_result"] = result
 
-    return {
-        "step_type": "gap_analysis",
-        "baseline": baseline,
-        "result": result
-    }
+    return {"step_type": "gap_analysis", "baseline": baseline, "result": result}
 
 
-async def monitoring_check_step(context: Dict[str, Any], controls_to_check: List[str] = None) -> Dict[str, Any]:
+async def monitoring_check_step(
+    context: Dict[str, Any], controls_to_check: List[str] = None
+) -> Dict[str, Any]:
     """Step to perform monitoring checks on controls"""
     monitor = context.get("monitor")  # Would be injected
     controls = controls_to_check or context.get("target_controls", [])
@@ -384,7 +413,7 @@ async def monitoring_check_step(context: Dict[str, Any], controls_to_check: List
             result = {
                 "status": "pass" if hash(control_id) % 4 != 0 else "fail",
                 "control_id": control_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         check_results[control_id] = result
 
@@ -393,7 +422,7 @@ async def monitoring_check_step(context: Dict[str, Any], controls_to_check: List
     return {
         "step_type": "monitoring_check",
         "controls_checked": controls,
-        "results": check_results
+        "results": check_results,
     }
 
 
@@ -407,15 +436,12 @@ async def evidence_collection_step(context: Dict[str, Any]) -> Dict[str, Any]:
         evidence_results[control_id] = {
             "evidence_found": hash(control_id + "evidence") % 2 == 0,
             "evidence_count": hash(control_id) % 5 + 1,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     context["evidence_results"] = evidence_results
 
-    return {
-        "step_type": "evidence_collection",
-        "results": evidence_results
-    }
+    return {"step_type": "evidence_collection", "results": evidence_results}
 
 
 async def remediation_planning_step(context: Dict[str, Any]) -> Dict[str, Any]:
@@ -428,33 +454,39 @@ async def remediation_planning_step(context: Dict[str, Any]) -> Dict[str, Any]:
 
     missing_controls = gap_results.get("missing_controls", {}).get("controls", [])
     for control_id in missing_controls:
-        remediation_actions.append({
-            "control_id": control_id,
-            "action_type": "implement",
-            "priority": "high",
-            "description": f"Implement missing control {control_id}"
-        })
+        remediation_actions.append(
+            {
+                "control_id": control_id,
+                "action_type": "implement",
+                "priority": "high",
+                "description": f"Implement missing control {control_id}",
+            }
+        )
 
     # Check monitoring failures
     for control_id, check_result in monitoring_results.items():
         if check_result.get("status") == "fail":
-            remediation_actions.append({
-                "control_id": control_id,
-                "action_type": "remediate",
-                "priority": "critical",
-                "description": f"Address monitoring failure for {control_id}"
-            })
+            remediation_actions.append(
+                {
+                    "control_id": control_id,
+                    "action_type": "remediate",
+                    "priority": "critical",
+                    "description": f"Address monitoring failure for {control_id}",
+                }
+            )
 
     context["remediation_plan"] = remediation_actions
 
     return {
         "step_type": "remediation_planning",
         "actions_created": len(remediation_actions),
-        "actions": remediation_actions
+        "actions": remediation_actions,
     }
 
 
-def create_compliance_assessment_strand(target_controls: List[str], **kwargs) -> List[WorkflowStep]:
+def create_compliance_assessment_strand(
+    target_controls: List[str], **kwargs
+) -> List[WorkflowStep]:
     """Create steps for a compliance assessment strand"""
     return [
         WorkflowStep(
@@ -462,7 +494,7 @@ def create_compliance_assessment_strand(target_controls: List[str], **kwargs) ->
             step_type="evidence",
             description="Collect evidence for target controls",
             action=evidence_collection_step,
-            parameters={}
+            parameters={},
         ),
         WorkflowStep(
             step_id="gap_analysis",
@@ -470,7 +502,7 @@ def create_compliance_assessment_strand(target_controls: List[str], **kwargs) ->
             description="Perform gap analysis against baseline",
             action=gap_analysis_step,
             parameters={"baseline": kwargs.get("baseline", "moderate")},
-            depends_on=["evidence_collection"]
+            depends_on=["evidence_collection"],
         ),
         WorkflowStep(
             step_id="monitoring_check",
@@ -478,7 +510,7 @@ def create_compliance_assessment_strand(target_controls: List[str], **kwargs) ->
             description="Run monitoring checks on controls",
             action=monitoring_check_step,
             parameters={"controls_to_check": target_controls},
-            depends_on=["gap_analysis"]
+            depends_on=["gap_analysis"],
         ),
         WorkflowStep(
             step_id="remediation_planning",
@@ -486,17 +518,21 @@ def create_compliance_assessment_strand(target_controls: List[str], **kwargs) ->
             description="Create remediation plans for gaps",
             action=remediation_planning_step,
             parameters={},
-            depends_on=["gap_analysis", "monitoring_check"]
-        )
+            depends_on=["gap_analysis", "monitoring_check"],
+        ),
     ]
 
 
-def create_family_assessment_strand(target_controls: List[str], **kwargs) -> List[WorkflowStep]:
+def create_family_assessment_strand(
+    target_controls: List[str], **kwargs
+) -> List[WorkflowStep]:
     """Create steps for a family-specific assessment strand"""
     family = kwargs.get("family", "AC")
 
     # Filter controls by family
-    family_controls = [ctrl for ctrl in target_controls if ctrl.startswith(f"{family}-")]
+    family_controls = [
+        ctrl for ctrl in target_controls if ctrl.startswith(f"{family}-")
+    ]
 
     return [
         WorkflowStep(
@@ -504,7 +540,7 @@ def create_family_assessment_strand(target_controls: List[str], **kwargs) -> Lis
             step_type="evidence",
             description=f"Collect evidence for {family} family controls",
             action=evidence_collection_step,
-            parameters={}
+            parameters={},
         ),
         WorkflowStep(
             step_id="family_monitoring",
@@ -512,7 +548,7 @@ def create_family_assessment_strand(target_controls: List[str], **kwargs) -> Lis
             description=f"Monitor {family} family controls",
             action=monitoring_check_step,
             parameters={"controls_to_check": family_controls},
-            depends_on=["family_evidence_collection"]
+            depends_on=["family_evidence_collection"],
         ),
         WorkflowStep(
             step_id="family_gap_analysis",
@@ -520,6 +556,6 @@ def create_family_assessment_strand(target_controls: List[str], **kwargs) -> Lis
             description=f"Analyze gaps in {family} family",
             action=gap_analysis_step,
             parameters={"baseline": kwargs.get("baseline", "moderate")},
-            depends_on=["family_monitoring"]
-        )
+            depends_on=["family_monitoring"],
+        ),
     ]

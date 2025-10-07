@@ -284,7 +284,9 @@ async def get_sp800171_baseline() -> dict[str, Any]:
             include_controls = imports[0].get("include-controls", [])
             if include_controls:
                 with_ids = include_controls[0].get("with-ids", [])
-                control_ids = [control_id for control_id in with_ids if isinstance(control_id, str)]
+                control_ids = [
+                    control_id for control_id in with_ids if isinstance(control_id, str)
+                ]
 
         controls_data = await nist_server.loader.load_controls()
 
@@ -296,12 +298,14 @@ async def get_sp800171_baseline() -> dict[str, Any]:
             for control in group.get("controls", []):
                 control_id = control.get("id", "").upper()
                 if control_id in [cid.upper() for cid in control_ids]:
-                    baseline_controls.append({
-                        "id": control_id,
-                        "title": control.get("title", ""),
-                        "family": control_id[:2],
-                        "class": "SP800-171"
-                    })
+                    baseline_controls.append(
+                        {
+                            "id": control_id,
+                            "title": control.get("title", ""),
+                            "family": control_id[:2],
+                            "class": "SP800-171",
+                        }
+                    )
                     found_control_ids.add(control_id)
 
         return {
@@ -329,8 +333,15 @@ async def get_sp800171_catalog() -> dict[str, Any]:
             "version": "2.0",
             "total_controls": total_controls,
             "families": len(groups),
-            "groups": [{"id": group["id"], "title": group["title"], "controls_count": len(group.get("controls", []))} for group in groups],
-            "description": "Complete catalog of 110 security requirements for protecting Controlled Unclassified Information (CUI)"
+            "groups": [
+                {
+                    "id": group["id"],
+                    "title": group["title"],
+                    "controls_count": len(group.get("controls", [])),
+                }
+                for group in groups
+            ],
+            "description": "Complete catalog of 110 security requirements for protecting Controlled Unclassified Information (CUI)",
         }
     except Exception as e:
         logger.error(f"Error loading SP 800-171 catalog: {e}")
@@ -358,7 +369,7 @@ async def get_sp800171_control(control_id: str) -> dict[str, Any]:
                         "title": control["title"],
                         "description": control["title"],
                         "sp800_53_mappings": sp80053_mappings,
-                        "class": "SP800-171"
+                        "class": "SP800-171",
                     }
 
         raise ValueError(f"SP 800-171 control {control_id} not found")
@@ -378,18 +389,20 @@ async def get_sp800171_family(family: str) -> dict[str, Any]:
             if group["id"] == family:
                 controls = []
                 for control in group.get("controls", []):
-                    controls.append({
-                        "id": control["id"],
-                        "title": control["title"],
-                        "sp800_53_mappings": control.get("sp800-53-mappings", [])
-                    })
+                    controls.append(
+                        {
+                            "id": control["id"],
+                            "title": control["title"],
+                            "sp800_53_mappings": control.get("sp800-53-mappings", []),
+                        }
+                    )
 
                 return {
                     "family": family,
                     "family_name": group["title"],
                     "total_controls": len(controls),
                     "controls": controls,
-                    "description": group["description"]
+                    "description": group["description"],
                 }
 
         raise ValueError(f"SP 800-171 family {family} not found")
@@ -413,7 +426,9 @@ async def sp800171_to_sp80053_mapping(control_ids: list[str]) -> dict[str, Any]:
             for group in catalog_data.get("catalog", {}).get("groups", []):
                 for control in group.get("controls", []):
                     if control.get("id", "").upper() == control_id:
-                        sp80053_mappings[control_id] = control.get("sp800-53-mappings", [])
+                        sp80053_mappings[control_id] = control.get(
+                            "sp800-53-mappings", []
+                        )
                         break
                 if sp80053_mappings[control_id]:
                     break
@@ -421,7 +436,7 @@ async def sp800171_to_sp80053_mapping(control_ids: list[str]) -> dict[str, Any]:
         return {
             "sp800171_to_sp80053_mappings": sp80053_mappings,
             "total_sp800171_controls": len(control_ids),
-            "controls_mapped": len([k for k, v in sp80053_mappings.items() if v])
+            "controls_mapped": len([k for k, v in sp80053_mappings.items() if v]),
         }
     except Exception as e:
         logger.error(f"Error mapping SP 800-171 to SP 800-53: {e}")
@@ -467,13 +482,17 @@ async def get_cmmc_level(level: int) -> dict[str, Any]:
         for group in controls_data.get("catalog", {}).get("groups", []):
             for control in group.get("controls", []):
                 control_id = control.get("id", "").upper()
-                if control_id in [cid.upper() for cid in level_data.get("controls", [])]:
-                    level_controls.append({
-                        "id": control_id,
-                        "title": control.get("title", ""),
-                        "family": control_id[:2],
-                        "class": "CMMC"
-                    })
+                if control_id in [
+                    cid.upper() for cid in level_data.get("controls", [])
+                ]:
+                    level_controls.append(
+                        {
+                            "id": control_id,
+                            "title": control.get("title", ""),
+                            "family": control_id[:2],
+                            "class": "CMMC",
+                        }
+                    )
                     found_control_ids.add(control_id)
 
         level_data["resolved_controls"] = level_controls
@@ -515,24 +534,34 @@ async def cmmc_compliance_assessment(
         level_compliance = {}
 
         for level_name, level_controls in required_by_level.items():
-            implemented_for_level = [cid for cid in implemented_controls_upper if cid in level_controls]
-            missing_for_level = [cid for cid in level_controls if cid not in implemented_controls_upper]
+            implemented_for_level = [
+                cid for cid in implemented_controls_upper if cid in level_controls
+            ]
+            missing_for_level = [
+                cid for cid in level_controls if cid not in implemented_controls_upper
+            ]
 
             level_compliance[level_name] = {
                 "required": len(level_controls),
                 "implemented": len(implemented_for_level),
                 "missing": len(missing_for_level),
-                "compliance_percentage": round((len(implemented_for_level) / len(level_controls)) * 100, 2),
-                "missing_controls": missing_for_level
+                "compliance_percentage": round(
+                    (len(implemented_for_level) / len(level_controls)) * 100, 2
+                ),
+                "missing_controls": missing_for_level,
             }
 
         # Overall assessment
         total_required = len(required_controls)
-        total_implemented = len([cid for cid in implemented_controls_upper if cid in required_controls])
+        total_implemented = len(
+            [cid for cid in implemented_controls_upper if cid in required_controls]
+        )
 
         # Check if all controls for target level are implemented
         target_level_controls = required_by_level.get(f"Level {target_level}", [])
-        has_target_level = all(cid in implemented_controls_upper for cid in target_level_controls)
+        has_target_level = all(
+            cid in implemented_controls_upper for cid in target_level_controls
+        )
 
         assessment_level = target_level if has_target_level else target_level - 1
 
@@ -541,17 +570,21 @@ async def cmmc_compliance_assessment(
                 "implemented_controls_count": len(implemented_controls),
                 "target_level": target_level,
                 "assessment_level": assessment_level,
-                "overall_compliance_percentage": round((total_implemented / total_required) * 100, 2),
+                "overall_compliance_percentage": round(
+                    (total_implemented / total_required) * 100, 2
+                ),
                 "fully_compliant_to_target": has_target_level,
                 "total_required": total_required,
                 "total_implemented": total_implemented,
-                "total_missing": total_required - total_implemented
+                "total_missing": total_required - total_implemented,
             },
             "level_details": level_compliance,
             "recommendations": [
-                f"Achieve Level {target_level}" if has_target_level else f"Work towards Level {target_level}",
-                f"Implement missing {total_required - total_implemented} controls across all levels"
-            ]
+                f"Achieve Level {target_level}"
+                if has_target_level
+                else f"Work towards Level {target_level}",
+                f"Implement missing {total_required - total_implemented} controls across all levels",
+            ],
         }
     except Exception as e:
         logger.error(f"Error performing CMMC compliance assessment: {e}")
@@ -587,7 +620,9 @@ async def get_fedramp_baseline(impact_level: str) -> dict[str, Any]:
                 break
 
         if not target_baseline:
-            raise ValueError(f"FedRAMP baseline not found for impact level: {impact_level}")
+            raise ValueError(
+                f"FedRAMP baseline not found for impact level: {impact_level}"
+            )
 
         # Load the corresponding SP 800-53 baseline profile
         if impact_level == "low":
@@ -608,7 +643,11 @@ async def get_fedramp_baseline(impact_level: str) -> dict[str, Any]:
                 include_controls = imports[0].get("include-controls", [])
                 if include_controls:
                     with_ids = include_controls[0].get("with-ids", [])
-                    control_ids = [control_id for control_id in with_ids if isinstance(control_id, str)]
+                    control_ids = [
+                        control_id
+                        for control_id in with_ids
+                        if isinstance(control_id, str)
+                    ]
 
         controls_data = await nist_server.loader.load_controls()
 
@@ -620,12 +659,14 @@ async def get_fedramp_baseline(impact_level: str) -> dict[str, Any]:
             for control in group.get("controls", []):
                 control_id = control.get("id", "").upper()
                 if control_id in [cid.upper() for cid in control_ids]:
-                    baseline_controls.append({
-                        "id": control_id,
-                        "title": control.get("title", ""),
-                        "family": control_id[:2],
-                        "class": "FedRAMP"
-                    })
+                    baseline_controls.append(
+                        {
+                            "id": control_id,
+                            "title": control.get("title", ""),
+                            "family": control_id[:2],
+                            "class": "FedRAMP",
+                        }
+                    )
                     found_control_ids.add(control_id)
 
         return {
@@ -670,7 +711,9 @@ async def fedramp_readiness_assessment(
         implemented_controls_upper = [cid.upper() for cid in implemented_controls]
 
         # Assess implementation
-        implemented_count = len([cid for cid in implemented_controls_upper if cid in required_control_ids])
+        implemented_count = len(
+            [cid for cid in implemented_controls_upper if cid in required_control_ids]
+        )
         total_required = len(required_control_ids)
         missing_count = total_required - implemented_count
 
@@ -699,16 +742,18 @@ async def fedramp_readiness_assessment(
                 "total_required_controls": total_required,
                 "missing_controls": missing_count,
                 "readiness_level": readiness,
-                "available_pathways": pathways
+                "available_pathways": pathways,
             },
-            "fedramp_requirements": fedramp_data.get("framework", {}).get("requirements", {}),
+            "fedramp_requirements": fedramp_data.get("framework", {}).get(
+                "requirements", {}
+            ),
             "recommendations": [
                 f"Achieve at least 75% compliance before pursuing authorization (currently {compliance_percentage}%)",
                 f"Focus on implementing missing {missing_count} controls",
                 f"For {service_model.upper()} services, consider the guidance in FedRAMP Rev 4",
                 "Develop comprehensive System Security Plan (SSP)",
-                "Prepare for continuous monitoring requirements"
-            ]
+                "Prepare for continuous monitoring requirements",
+            ],
         }
     except Exception as e:
         logger.error(f"Error performing FedRAMP readiness assessment: {e}")
@@ -777,9 +822,7 @@ async def _ensure_initialized():
 
 @app.tool()
 async def start_continuous_monitoring(
-    control_id: str,
-    check_interval_hours: int = 24,
-    connector_id: Optional[str] = None
+    control_id: str, check_interval_hours: int = 24, connector_id: Optional[str] = None
 ) -> dict[str, Any]:
     """Start continuous monitoring for a specific control"""
     await _ensure_initialized()
@@ -788,7 +831,7 @@ async def start_continuous_monitoring(
         control_id=control_id,
         check_interval_hours=check_interval_hours,
         connector_id=connector_id,
-        check_type="continuous"
+        check_type="continuous",
     )
 
     return {
@@ -796,7 +839,7 @@ async def start_continuous_monitoring(
         "control_id": control_id,
         "interval_hours": check_interval_hours,
         "status": "started",
-        "message": f"Continuous monitoring started for control {control_id}"
+        "message": f"Continuous monitoring started for control {control_id}",
     }
 
 
@@ -809,13 +852,13 @@ async def stop_continuous_monitoring(monitor_id: str) -> dict[str, Any]:
         return {
             "monitor_id": monitor_id,
             "status": "stopped",
-            "message": "Continuous monitoring stopped successfully"
+            "message": "Continuous monitoring stopped successfully",
         }
     else:
         return {
             "monitor_id": monitor_id,
             "status": "error",
-            "message": "Monitor not found or already stopped"
+            "message": "Monitor not found or already stopped",
         }
 
 
@@ -826,7 +869,9 @@ async def get_monitoring_status() -> dict[str, Any]:
 
 
 @app.tool()
-async def run_manual_check(control_id: str, connector_id: Optional[str] = None) -> dict[str, Any]:
+async def run_manual_check(
+    control_id: str, connector_id: Optional[str] = None
+) -> dict[str, Any]:
     """Run a manual compliance check for a control"""
     await _ensure_initialized()
 
@@ -843,14 +888,16 @@ async def run_manual_check(control_id: str, connector_id: Optional[str] = None) 
     result = await _monitor.run_immediate_check(control_id, connector_id)
 
     # Record the check in history
-    _storage.record_monitoring_check({
-        "control_id": control_id,
-        "check_type": "manual",
-        "connector_id": connector_id,
-        "status": result.get("status", "unknown"),
-        "result_details": result,
-        "evidence_paths": result.get("evidence_paths", [])
-    })
+    _storage.record_monitoring_check(
+        {
+            "control_id": control_id,
+            "check_type": "manual",
+            "connector_id": connector_id,
+            "status": result.get("status", "unknown"),
+            "result_details": result,
+            "evidence_paths": result.get("evidence_paths", []),
+        }
+    )
 
     return result
 
@@ -859,7 +906,7 @@ async def run_manual_check(control_id: str, connector_id: Optional[str] = None) 
 async def execute_compliance_workflow(
     target_controls: list[str],
     workflow_type: str = "compliance_assessment",
-    baseline: str = "moderate"
+    baseline: str = "moderate",
 ) -> dict[str, Any]:
     """Execute an automated compliance workflow (Strand)"""
     await _ensure_initialized()
@@ -869,14 +916,12 @@ async def execute_compliance_workflow(
         "compliance_assessment",
         "Compliance Assessment Workflow",
         "Automated compliance assessment with gap analysis and remediation planning",
-        create_compliance_assessment_strand
+        create_compliance_assessment_strand,
     )
 
     # Create and execute strand
     strand = _orchestrator.create_strand(
-        workflow_type,
-        target_controls,
-        baseline=baseline
+        workflow_type, target_controls, baseline=baseline
     )
 
     result = await _orchestrator.execute_strand_async(strand)
@@ -885,7 +930,9 @@ async def execute_compliance_workflow(
 
 
 @app.tool()
-async def get_workflow_history(workflow_id: str, limit: int = 10) -> list[dict[str, Any]]:
+async def get_workflow_history(
+    workflow_id: str, limit: int = 10
+) -> list[dict[str, Any]]:
     """Get execution history for a workflow"""
     await _ensure_initialized()
 
@@ -924,7 +971,7 @@ async def save_assessment(assessment_data: dict[str, Any]) -> dict[str, Any]:
     return {
         "assessment_id": assessment_id,
         "status": "saved",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -936,7 +983,7 @@ async def create_remediation_action(
     priority: str = "medium",
     assessment_id: Optional[str] = None,
     assigned_to: Optional[str] = None,
-    due_date: Optional[str] = None
+    due_date: Optional[str] = None,
 ) -> dict[str, Any]:
     """Create a remediation action for a control"""
     await _ensure_initialized()
@@ -955,12 +1002,12 @@ async def create_remediation_action(
             f"Configure {control_id} controls in the environment",
             "Test implementation",
             "Document implementation",
-            "Verify effectiveness"
+            "Verify effectiveness",
         ]
         evidence_required = [
             f"Screenshots of {control_id} configuration",
             f"Test results for {control_id} implementation",
-            "Documentation of implementation steps"
+            "Documentation of implementation steps",
         ]
     elif action_type == "enhance":
         implementation_steps = [
@@ -968,42 +1015,41 @@ async def create_remediation_action(
             "Identify enhancement opportunities",
             f"Implement {control_id} enhancements",
             "Test enhanced controls",
-            "Update documentation"
+            "Update documentation",
         ]
         evidence_required = [
             f"Assessment report for current {control_id} implementation",
-            f"Enhancement test results for {control_id}"
+            f"Enhancement test results for {control_id}",
         ]
     elif action_type == "document":
         implementation_steps = [
             f"Review current {control_id} documentation",
             f"Update {control_id} procedures",
             "Validate documentation accuracy",
-            "Train relevant personnel"
+            "Train relevant personnel",
         ]
-        evidence_required = [
-            f"Updated {control_id} documentation",
-            "Training records"
-        ]
+        evidence_required = [f"Updated {control_id} documentation", "Training records"]
 
-    action_id = _storage.create_remediation_action({
-        "control_id": control_id,
-        "assessment_id": assessment_id,
-        "action_type": action_type,
-        "description": description,
-        "priority": priority,
-        "status": "pending",
-        "assigned_to": assigned_to,
-        "due_date": due_date,
-        "implementation_steps": implementation_steps,
-        "evidence_required": evidence_required
-    })
+    action_id = _storage.create_remediation_action(
+        {
+            "control_id": control_id,
+            "assessment_id": assessment_id,
+            "action_type": action_type,
+            "description": description,
+            "priority": priority,
+            "status": "pending",
+            "assigned_to": assigned_to,
+            "due_date": due_date,
+            "implementation_steps": implementation_steps,
+            "evidence_required": evidence_required,
+        }
+    )
 
     return {
         "action_id": action_id,
         "control_id": control_id,
         "status": "created",
-        "message": f"Remediation action created for {control_id}"
+        "message": f"Remediation action created for {control_id}",
     }
 
 
@@ -1012,7 +1058,7 @@ async def get_remediation_actions(
     status_filter: Optional[str] = None,
     priority_filter: Optional[str] = None,
     control_id: Optional[str] = None,
-    limit: int = 100
+    limit: int = 100,
 ) -> list[dict[str, Any]]:
     """Get remediation actions with optional filtering"""
     await _ensure_initialized()
@@ -1021,7 +1067,7 @@ async def get_remediation_actions(
         status_filter=status_filter,
         priority_filter=priority_filter,
         control_id=control_id,
-        limit=limit
+        limit=limit,
     )
 
 
@@ -1035,9 +1081,7 @@ async def get_overdue_remediations() -> list[dict[str, Any]]:
 
 @app.tool()
 async def update_remediation_status(
-    action_id: str,
-    status: str,
-    outcome: Optional[dict[str, Any]] = None
+    action_id: str, status: str, outcome: Optional[dict[str, Any]] = None
 ) -> dict[str, Any]:
     """Update the status of a remediation action"""
     await _ensure_initialized()
@@ -1054,33 +1098,34 @@ async def update_remediation_status(
             "action_id": action_id,
             "status": status,
             "updated": True,
-            "outcome": outcome
+            "outcome": outcome,
         }
     else:
         return {
             "action_id": action_id,
             "status": "error",
             "updated": False,
-            "message": "Action not found or update failed"
+            "message": "Action not found or update failed",
         }
 
 
 @app.tool()
 async def register_connector(
-    connector_type: str,
-    config: dict[str, Any]
+    connector_type: str, config: dict[str, Any]
 ) -> dict[str, Any]:
     """Register a new connector for external system integration"""
     connector = connector_registry.create_connector(connector_type, config)
 
     if connector:
         # Save connector in storage
-        connector_id = _storage.register_connector({
-            "name": config.get("name", connector.connector_id),
-            "type": connector_type,
-            "config": config,
-            "status": "active"
-        })
+        connector_id = _storage.register_connector(
+            {
+                "name": config.get("name", connector.connector_id),
+                "type": connector_type,
+                "config": config,
+                "status": "active",
+            }
+        )
 
         # Register with monitor system
         _monitor.register_connector(connector.connector_id, connector)
@@ -1089,12 +1134,12 @@ async def register_connector(
             "connector_id": connector_id,
             "type": connector_type,
             "status": "registered",
-            "message": f"Connector '{connector.name}' registered successfully"
+            "message": f"Connector '{connector.name}' registered successfully",
         }
     else:
         return {
             "status": "error",
-            "message": f"Failed to register connector of type '{connector_type}'"
+            "message": f"Failed to register connector of type '{connector_type}'",
         }
 
 
@@ -1106,38 +1151,44 @@ async def list_connectors() -> list[dict[str, Any]]:
 
 @app.tool()
 async def get_monitoring_history(
-    control_id: Optional[str] = None,
-    days: int = 7
+    control_id: Optional[str] = None, days: int = 7
 ) -> list[dict[str, Any]]:
     """Get monitoring check history"""
     await _ensure_initialized()
 
-    return _monitor.get_all_monitoring_history(days) if control_id is None else _monitor.get_control_monitoring_history(control_id, days)
+    return (
+        _monitor.get_all_monitoring_history(days)
+        if control_id is None
+        else _monitor.get_control_monitoring_history(control_id, days)
+    )
 
 
 @app.tool()
 async def gap_analysis_with_history(
     implemented_controls: list[str],
     target_baseline: str = "moderate",
-    create_remediations: bool = True
+    create_remediations: bool = True,
 ) -> dict[str, Any]:
     """Perform gap analysis and save results to history with optional remediation planning"""
     # Perform the analysis
     from .analysis_tools import NISTAnalysisTools
+
     analysis = NISTAnalysisTools(nist_server.loader)
     result = await analysis.gap_analysis(implemented_controls, target_baseline)
 
     # Save to history
     await _ensure_initialized()
-    assessment_id = _storage.save_assessment({
-        "assessment_type": "gap_analysis_with_history",
-        "target_baseline": target_baseline,
-        "input_controls": implemented_controls,
-        "implemented_controls": implemented_controls,
-        "results": result,
-        "compliance_score": result.get("compliance_percentage"),
-        "created_by": "gap_analysis_with_history_tool"
-    })
+    assessment_id = _storage.save_assessment(
+        {
+            "assessment_type": "gap_analysis_with_history",
+            "target_baseline": target_baseline,
+            "input_controls": implemented_controls,
+            "implemented_controls": implemented_controls,
+            "results": result,
+            "compliance_score": result.get("compliance_percentage"),
+            "created_by": "gap_analysis_with_history_tool",
+        }
+    )
 
     # Create remediation actions for missing controls if requested
     if create_remediations:
@@ -1145,31 +1196,35 @@ async def gap_analysis_with_history(
         remediation_actions = []
 
         for control_id in missing_controls:
-            action_id = _storage.create_remediation_action({
-                "control_id": control_id,
-                "assessment_id": assessment_id,
-                "action_type": "implement",
-                "description": f"Implement missing control {control_id} to achieve {target_baseline} baseline compliance",
-                "priority": "high",
-                "status": "pending",
-                "implementation_steps": [
-                    f"Review {control_id} requirements and existing implementations",
-                    f"Design {control_id} implementation approach",
-                    f"Implement {control_id} in the target environment",
-                    f"Test {control_id} implementation",
-                    f"Document {control_id} implementation and evidence"
-                ],
-                "evidence_required": [
-                    f"Screenshots of {control_id} configuration",
-                    f"Test results demonstrating {control_id} effectiveness",
-                    f"Documentation of {control_id} implementation"
-                ]
-            })
-            remediation_actions.append({
-                "control_id": control_id,
-                "action_id": action_id,
-                "action_type": "implement"
-            })
+            action_id = _storage.create_remediation_action(
+                {
+                    "control_id": control_id,
+                    "assessment_id": assessment_id,
+                    "action_type": "implement",
+                    "description": f"Implement missing control {control_id} to achieve {target_baseline} baseline compliance",
+                    "priority": "high",
+                    "status": "pending",
+                    "implementation_steps": [
+                        f"Review {control_id} requirements and existing implementations",
+                        f"Design {control_id} implementation approach",
+                        f"Implement {control_id} in the target environment",
+                        f"Test {control_id} implementation",
+                        f"Document {control_id} implementation and evidence",
+                    ],
+                    "evidence_required": [
+                        f"Screenshots of {control_id} configuration",
+                        f"Test results demonstrating {control_id} effectiveness",
+                        f"Documentation of {control_id} implementation",
+                    ],
+                }
+            )
+            remediation_actions.append(
+                {
+                    "control_id": control_id,
+                    "action_id": action_id,
+                    "action_type": "implement",
+                }
+            )
 
         result["remediation_actions_created"] = len(remediation_actions)
         result["remediation_details"] = remediation_actions

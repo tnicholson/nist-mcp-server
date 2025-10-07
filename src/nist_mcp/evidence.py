@@ -60,7 +60,7 @@ class EvidenceItem:
         reviewer: str = "",
         review_date: datetime | None = None,
         status: EvidenceStatus = EvidenceStatus.COLLECTED,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ):
         self.id = str(uuid4())
         self.control_id = control_id.upper()
@@ -89,11 +89,11 @@ class EvidenceItem:
             "reviewer": self.reviewer,
             "review_date": self.review_date.isoformat() if self.review_date else None,
             "status": self.status.value,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'EvidenceItem':
+    def from_dict(cls, data: dict[str, Any]) -> "EvidenceItem":
         """Create evidence item from dictionary"""
         return cls(
             control_id=data["control_id"],
@@ -102,11 +102,15 @@ class EvidenceItem:
             description=data.get("description", ""),
             source=data.get("source", ""),
             collected_by=data.get("collected_by", ""),
-            collected_date=datetime.fromisoformat(data["collected_date"]) if data.get("collected_date") else None,
+            collected_date=datetime.fromisoformat(data["collected_date"])
+            if data.get("collected_date")
+            else None,
             reviewer=data.get("reviewer", ""),
-            review_date=datetime.fromisoformat(data["review_date"]) if data.get("review_date") else None,
+            review_date=datetime.fromisoformat(data["review_date"])
+            if data.get("review_date")
+            else None,
             status=EvidenceStatus(data.get("status", "collected")),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )
 
 
@@ -118,7 +122,9 @@ class EvidenceCollection:
         self.name = name
         self.description = description
         self.created_date = datetime.now(timezone.utc)
-        self.evidence_items: dict[str, list[EvidenceItem]] = {}  # control_id -> list of evidence
+        self.evidence_items: dict[
+            str, list[EvidenceItem]
+        ] = {}  # control_id -> list of evidence
 
     def add_evidence(self, evidence_item: EvidenceItem) -> None:
         """Add evidence item to collection"""
@@ -126,7 +132,9 @@ class EvidenceCollection:
             self.evidence_items[evidence_item.control_id] = []
 
         self.evidence_items[evidence_item.control_id].append(evidence_item)
-        logger.info(f"Added evidence {evidence_item.id} for control {evidence_item.control_id}")
+        logger.info(
+            f"Added evidence {evidence_item.id} for control {evidence_item.control_id}"
+        )
 
     def get_evidence_for_control(self, control_id: str) -> list[EvidenceItem]:
         """Get all evidence for a specific control"""
@@ -153,7 +161,7 @@ class EvidenceCollection:
             "created_date": self.created_date.isoformat(),
             "total_controls": len(self.evidence_items),
             "total_evidence_items": total_evidence,
-            "status_breakdown": status_counts
+            "status_breakdown": status_counts,
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -166,15 +174,14 @@ class EvidenceCollection:
             "evidence_items": {
                 control_id: [item.to_dict() for item in items]
                 for control_id, items in self.evidence_items.items()
-            }
+            },
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'EvidenceCollection':
+    def from_dict(cls, data: dict[str, Any]) -> "EvidenceCollection":
         """Create collection from dictionary"""
         collection = cls(
-            name=data.get("name", "default"),
-            description=data.get("description", "")
+            name=data.get("name", "default"), description=data.get("description", "")
         )
         collection.id = data["id"]
         collection.created_date = datetime.fromisoformat(data["created_date"])
@@ -201,7 +208,7 @@ class EvidenceManager:
         # Load all collection files
         for collection_file in self.storage_path.glob("*.json"):
             try:
-                async with aiofiles.open(collection_file, 'r', encoding='utf-8') as f:
+                async with aiofiles.open(collection_file, "r", encoding="utf-8") as f:
                     content = await f.read()
                     data = json.loads(content)
                     collection = EvidenceCollection.from_dict(data)
@@ -239,13 +246,15 @@ class EvidenceManager:
             return self.collections.get(self.active_collection)
         return None
 
-    def add_evidence(self,
-                    control_id: str,
-                    evidence_type: EvidenceType,
-                    content: str | dict[str, Any],
-                    description: str = "",
-                    source: str = "",
-                    collected_by: str = "") -> str | None:
+    def add_evidence(
+        self,
+        control_id: str,
+        evidence_type: EvidenceType,
+        content: str | dict[str, Any],
+        description: str = "",
+        source: str = "",
+        collected_by: str = "",
+    ) -> str | None:
         """Add evidence to the active collection"""
         collection = self.get_active_collection()
         if not collection:
@@ -258,7 +267,7 @@ class EvidenceManager:
             content=content,
             description=description,
             source=source,
-            collected_by=collected_by
+            collected_by=collected_by,
         )
 
         collection.add_evidence(evidence_item)
@@ -273,10 +282,12 @@ class EvidenceManager:
             return collection.get_evidence_for_control(control_id)
         return []
 
-    def search_evidence(self,
-                       control_id: str | None = None,
-                       evidence_type: EvidenceType | None = None,
-                       status: EvidenceStatus | None = None) -> list[EvidenceItem]:
+    def search_evidence(
+        self,
+        control_id: str | None = None,
+        evidence_type: EvidenceType | None = None,
+        status: EvidenceStatus | None = None,
+    ) -> list[EvidenceItem]:
         """Search evidence across active collection"""
         collection = self.get_active_collection()
         if not collection:
@@ -295,7 +306,9 @@ class EvidenceManager:
 
         return results
 
-    def get_collection_summary(self, collection_id: str | None = None) -> dict[str, Any] | None:
+    def get_collection_summary(
+        self, collection_id: str | None = None
+    ) -> dict[str, Any] | None:
         """Get summary for a collection (or active if not specified)"""
         collection = None
         if collection_id and collection_id in self.collections:
@@ -312,12 +325,16 @@ class EvidenceManager:
                 "name": collection.name,
                 "description": collection.description,
                 "total_controls": len(collection.evidence_items),
-                "total_evidence": sum(len(items) for items in collection.evidence_items.values())
+                "total_evidence": sum(
+                    len(items) for items in collection.evidence_items.values()
+                ),
             }
             for collection_id, collection in self.collections.items()
         }
 
-    def export_collection(self, collection_id: str, format: str = "json") -> dict[str, Any] | None:
+    def export_collection(
+        self, collection_id: str, format: str = "json"
+    ) -> dict[str, Any] | None:
         """Export collection data"""
         collection = self.collections.get(collection_id)
         if collection:
@@ -331,7 +348,7 @@ class EvidenceManager:
         """Save collection to file"""
         try:
             collection_file = self.storage_path / f"{collection.id}.json"
-            with open(collection_file, 'w', encoding='utf-8') as f:
+            with open(collection_file, "w", encoding="utf-8") as f:
                 json.dump(collection.to_dict(), f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save collection {collection.id}: {e}")

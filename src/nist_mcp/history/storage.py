@@ -120,13 +120,27 @@ class HistoricalStorage:
             """)
 
             # Create indexes for performance
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_assessments_type ON assessments(type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_assessments_timestamp ON assessments(timestamp)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_monitoring_assessment ON monitoring_checks(assessment_id)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_monitoring_control ON monitoring_checks(control_id)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_remediation_control ON remediation_actions(control_id)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_remediation_status ON remediation_actions(status)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_assessments_type ON assessments(type)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_assessments_timestamp ON assessments(timestamp)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_monitoring_assessment ON monitoring_checks(assessment_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_monitoring_control ON monitoring_checks(control_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_remediation_control ON remediation_actions(control_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_remediation_status ON remediation_actions(status)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status)"
+            )
 
             logger.info("Historical storage initialized")
 
@@ -141,31 +155,31 @@ class HistoricalStorage:
         assessment_id = f"assess_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO assessments (
                     id, type, target_baseline, target_level, input_controls,
                     implemented_controls, results, compliance_score, created_by
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                assessment_id,
-                assessment_data.get("assessment_type", "gap_analysis"),
-                assessment_data.get("target_baseline"),
-                assessment_data.get("target_level"),
-                json.dumps(assessment_data.get("input_controls", [])),
-                json.dumps(assessment_data.get("implemented_controls", [])),
-                json.dumps(assessment_data.get("results", {})),
-                assessment_data.get("compliance_score"),
-                assessment_data.get("created_by", "system")
-            ))
+            """,
+                (
+                    assessment_id,
+                    assessment_data.get("assessment_type", "gap_analysis"),
+                    assessment_data.get("target_baseline"),
+                    assessment_data.get("target_level"),
+                    json.dumps(assessment_data.get("input_controls", [])),
+                    json.dumps(assessment_data.get("implemented_controls", [])),
+                    json.dumps(assessment_data.get("results", {})),
+                    assessment_data.get("compliance_score"),
+                    assessment_data.get("created_by", "system"),
+                ),
+            )
 
         logger.info(f"Saved assessment {assessment_id}")
         return assessment_id
 
     def get_assessments(
-        self,
-        assessment_type: Optional[str] = None,
-        limit: int = 50,
-        offset: int = 0
+        self, assessment_type: Optional[str] = None, limit: int = 50, offset: int = 0
     ) -> List[Dict[str, Any]]:
         """Get historical assessments"""
         with self._connect() as conn:
@@ -189,7 +203,8 @@ class HistoricalStorage:
 
         with self._connect() as conn:
             # Get compliance score trends
-            rows = conn.execute("""
+            rows = conn.execute(
+                """
                 SELECT
                     DATE(timestamp) as date,
                     AVG(compliance_score) as avg_score,
@@ -198,32 +213,41 @@ class HistoricalStorage:
                 WHERE timestamp >= ? AND compliance_score IS NOT NULL
                 GROUP BY DATE(timestamp)
                 ORDER BY date
-            """, (cutoff_date.isoformat(),)).fetchall()
+            """,
+                (cutoff_date.isoformat(),),
+            ).fetchall()
 
             scores_over_time = []
             for row in rows:
-                scores_over_time.append({
-                    "date": row["date"],
-                    "average_score": round(row["avg_score"], 2),
-                    "assessment_count": row["assessment_count"]
-                })
+                scores_over_time.append(
+                    {
+                        "date": row["date"],
+                        "average_score": round(row["avg_score"], 2),
+                        "assessment_count": row["assessment_count"],
+                    }
+                )
 
             # Get assessment type distribution
-            type_rows = conn.execute("""
+            type_rows = conn.execute(
+                """
                 SELECT type, COUNT(*) as count
                 FROM assessments
                 WHERE timestamp >= ?
                 GROUP BY type
                 ORDER BY count DESC
-            """, (cutoff_date.isoformat(),)).fetchall()
+            """,
+                (cutoff_date.isoformat(),),
+            ).fetchall()
 
-            type_distribution = [{"type": row["type"], "count": row["count"]} for row in type_rows]
+            type_distribution = [
+                {"type": row["type"], "count": row["count"]} for row in type_rows
+            ]
 
             return {
                 "period_days": days,
                 "scores_over_time": scores_over_time,
                 "assessment_type_distribution": type_distribution,
-                "total_assessments": sum(t["count"] for t in type_distribution)
+                "total_assessments": sum(t["count"] for t in type_distribution),
             }
 
     def record_monitoring_check(self, check_data: Dict[str, Any]) -> str:
@@ -231,22 +255,25 @@ class HistoricalStorage:
         check_id = f"check_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO monitoring_checks (
                     id, assessment_id, control_id, check_type, connector_id,
                     status, result_details, evidence_paths, next_check_scheduled
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                check_id,
-                check_data.get("assessment_id"),
-                check_data["control_id"],
-                check_data["check_type"],
-                check_data.get("connector_id"),
-                check_data["status"],
-                json.dumps(check_data.get("result_details", {})),
-                json.dumps(check_data.get("evidence_paths", [])),
-                check_data.get("next_check_scheduled")
-            ))
+            """,
+                (
+                    check_id,
+                    check_data.get("assessment_id"),
+                    check_data["control_id"],
+                    check_data["check_type"],
+                    check_data.get("connector_id"),
+                    check_data["status"],
+                    json.dumps(check_data.get("result_details", {})),
+                    json.dumps(check_data.get("evidence_paths", [])),
+                    check_data.get("next_check_scheduled"),
+                ),
+            )
 
         return check_id
 
@@ -254,7 +281,7 @@ class HistoricalStorage:
         self,
         control_id: Optional[str] = None,
         days: int = 7,
-        status_filter: Optional[str] = None
+        status_filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Get monitoring check history"""
         cutoff_date = datetime.now() - timedelta(days=days)
@@ -278,10 +305,11 @@ class HistoricalStorage:
 
     def get_monitoring_status(self, control_ids: List[str]) -> Dict[str, Any]:
         """Get current monitoring status for controls"""
-        placeholders = ','.join('?' * len(control_ids))
+        placeholders = ",".join("?" * len(control_ids))
 
         with self._connect() as conn:
-            rows = conn.execute(f"""
+            rows = conn.execute(
+                f"""
                 SELECT
                     control_id,
                     status,
@@ -289,7 +317,9 @@ class HistoricalStorage:
                     ROW_NUMBER() OVER (PARTITION BY control_id ORDER BY timestamp DESC) as rn
                 FROM monitoring_checks
                 WHERE control_id IN ({placeholders}) AND timestamp >= ?
-            """, control_ids + [(datetime.now() - timedelta(days=30)).isoformat()]).fetchall()
+            """,
+                control_ids + [(datetime.now() - timedelta(days=30)).isoformat()],
+            ).fetchall()
 
             status_summary = {}
             for row in rows:
@@ -297,7 +327,9 @@ class HistoricalStorage:
                     status_summary[row["control_id"]] = {
                         "latest_status": row["status"],
                         "last_checked": row["timestamp"],
-                        "days_since_check": (datetime.now() - datetime.fromisoformat(row["timestamp"])).days
+                        "days_since_check": (
+                            datetime.now() - datetime.fromisoformat(row["timestamp"])
+                        ).days,
                     }
 
             # Fill in controls with no checks
@@ -306,7 +338,7 @@ class HistoricalStorage:
                     status_summary[control_id] = {
                         "latest_status": "never_checked",
                         "last_checked": None,
-                        "days_since_check": None
+                        "days_since_check": None,
                     }
 
             return status_summary
@@ -320,50 +352,53 @@ class HistoricalStorage:
             due_date = datetime.fromisoformat(due_date).date()
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO remediation_actions (
                     id, control_id, assessment_id, action_type, description,
                     priority, status, assigned_to, due_date, implementation_steps,
                     evidence_required
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                action_id,
-                action_data["control_id"],
-                action_data.get("assessment_id"),
-                action_data["action_type"],
-                action_data["description"],
-                action_data["priority"],
-                action_data.get("status", "pending"),
-                action_data.get("assigned_to"),
-                due_date,
-                json.dumps(action_data.get("implementation_steps", [])),
-                json.dumps(action_data.get("evidence_required", []))
-            ))
+            """,
+                (
+                    action_id,
+                    action_data["control_id"],
+                    action_data.get("assessment_id"),
+                    action_data["action_type"],
+                    action_data["description"],
+                    action_data["priority"],
+                    action_data.get("status", "pending"),
+                    action_data.get("assigned_to"),
+                    due_date,
+                    json.dumps(action_data.get("implementation_steps", [])),
+                    json.dumps(action_data.get("evidence_required", [])),
+                ),
+            )
 
         logger.info(f"Created remediation action {action_id}")
         return action_id
 
     def update_remediation_status(
-        self,
-        action_id: str,
-        status: str,
-        outcome: Optional[Dict[str, Any]] = None
+        self, action_id: str, status: str, outcome: Optional[Dict[str, Any]] = None
     ) -> bool:
         """Update remediation action status"""
         completed_at = datetime.now() if status == "completed" else None
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 UPDATE remediation_actions
                 SET status = ?, updated_at = ?, completed_at = ?, outcome = ?
                 WHERE id = ?
-            """, (
-                status,
-                datetime.now(),
-                completed_at,
-                json.dumps(outcome) if outcome else None,
-                action_id
-            ))
+            """,
+                (
+                    status,
+                    datetime.now(),
+                    completed_at,
+                    json.dumps(outcome) if outcome else None,
+                    action_id,
+                ),
+            )
 
             return conn.total_changes > 0
 
@@ -372,7 +407,7 @@ class HistoricalStorage:
         status_filter: Optional[str] = None,
         priority_filter: Optional[str] = None,
         control_id: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """Get remediation actions with optional filters"""
         with self._connect() as conn:
@@ -392,8 +427,9 @@ class HistoricalStorage:
                 params.append(control_id)
 
             query += " ORDER BY " + (
-                "due_date, priority DESC" if priority_filter == "urgent" else
-                "priority DESC, due_date"
+                "due_date, priority DESC"
+                if priority_filter == "urgent"
+                else "priority DESC, due_date"
             )
 
             query += " LIMIT ?"
@@ -405,12 +441,15 @@ class HistoricalStorage:
     def get_overdue_remediation_actions(self) -> List[Dict[str, Any]]:
         """Get overdue remediation actions"""
         with self._connect() as conn:
-            rows = conn.execute("""
+            rows = conn.execute(
+                """
                 SELECT * FROM remediation_actions
                 WHERE status IN ('pending', 'in_progress')
                 AND due_date < ?
                 ORDER BY due_date asc, priority desc
-            """, (datetime.now().date().isoformat(),)).fetchall()
+            """,
+                (datetime.now().date().isoformat(),),
+            ).fetchall()
 
             return [dict(row) for row in rows]
 
@@ -419,27 +458,33 @@ class HistoricalStorage:
         connector_id = f"conn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO connectors (id, name, type, config, status)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                connector_id,
-                connector_data["name"],
-                connector_data["type"],
-                json.dumps(connector_data.get("config", {})),
-                connector_data.get("status", "active")
-            ))
+            """,
+                (
+                    connector_id,
+                    connector_data["name"],
+                    connector_data["type"],
+                    json.dumps(connector_data.get("config", {})),
+                    connector_data.get("status", "active"),
+                ),
+            )
 
         return connector_id
 
     def update_connector_status(self, connector_id: str, status: str) -> bool:
         """Update connector status"""
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 UPDATE connectors
                 SET status = ?, last_used = ?
                 WHERE id = ?
-            """, (status, datetime.now(), connector_id))
+            """,
+                (status, datetime.now(), connector_id),
+            )
 
             return conn.total_changes > 0
 
@@ -448,21 +493,24 @@ class HistoricalStorage:
         workflow_id = f"wf_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO workflows (
                     id, name, description, type, target_controls, schedule_config,
                     connector_ids, status
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                workflow_id,
-                workflow_data["name"],
-                workflow_data.get("description"),
-                workflow_data["type"],
-                json.dumps(workflow_data.get("target_controls", [])),
-                json.dumps(workflow_data.get("schedule_config", {})),
-                json.dumps(workflow_data.get("connector_ids", [])),
-                workflow_data.get("status", "active")
-            ))
+            """,
+                (
+                    workflow_id,
+                    workflow_data["name"],
+                    workflow_data.get("description"),
+                    workflow_data["type"],
+                    json.dumps(workflow_data.get("target_controls", [])),
+                    json.dumps(workflow_data.get("schedule_config", {})),
+                    json.dumps(workflow_data.get("connector_ids", [])),
+                    workflow_data.get("status", "active"),
+                ),
+            )
 
         logger.info(f"Created workflow {workflow_id}")
         return workflow_id
@@ -472,38 +520,49 @@ class HistoricalStorage:
         run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         with self._connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO workflow_runs (
                     id, workflow_id, status, results, error_message
                 ) VALUES (?, ?, ?, ?, ?)
-            """, (
-                run_id,
-                run_data["workflow_id"],
-                run_data["status"],
-                json.dumps(run_data.get("results", {})),
-                run_data.get("error_message")
-            ))
+            """,
+                (
+                    run_id,
+                    run_data["workflow_id"],
+                    run_data["status"],
+                    json.dumps(run_data.get("results", {})),
+                    run_data.get("error_message"),
+                ),
+            )
 
             # Update workflow last_run
-            conn.execute("""
+            conn.execute(
+                """
                 UPDATE workflows
                 SET last_run = ?, updated_at = ?
                 WHERE id = ?
-            """, (datetime.now(), datetime.now(), run_data["workflow_id"]))
+            """,
+                (datetime.now(), datetime.now(), run_data["workflow_id"]),
+            )
 
         return run_id
 
-    def get_workflow_runs(self, workflow_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_workflow_runs(
+        self, workflow_id: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """Get workflow run history"""
         with self._connect() as conn:
-            rows = conn.execute("""
+            rows = conn.execute(
+                """
                 SELECT wr.*, w.name as workflow_name
                 FROM workflow_runs wr
                 JOIN workflows w ON wr.workflow_id = w.id
                 WHERE wr.workflow_id = ?
                 ORDER BY wr.started_at DESC
                 LIMIT ?
-            """, (workflow_id, limit)).fetchall()
+            """,
+                (workflow_id, limit),
+            ).fetchall()
 
             return [dict(row) for row in rows]
 
@@ -526,21 +585,21 @@ class HistoricalStorage:
             # Remove old assessments and related data
             count_assessment = conn.execute(
                 "DELETE FROM assessments WHERE timestamp < ?",
-                (cutoff_date.isoformat(),)
+                (cutoff_date.isoformat(),),
             ).rowcount
 
             count_monitoring = conn.execute(
                 "DELETE FROM monitoring_checks WHERE timestamp < ?",
-                (cutoff_date.isoformat(),)
+                (cutoff_date.isoformat(),),
             ).rowcount
 
             count_workflow_runs = conn.execute(
                 "DELETE FROM workflow_runs WHERE started_at < ?",
-                (cutoff_date.isoformat(),)
+                (cutoff_date.isoformat(),),
             ).rowcount
 
             return {
                 "assessments_removed": count_assessment,
                 "monitoring_checks_removed": count_monitoring,
-                "workflow_runs_removed": count_workflow_runs
+                "workflow_runs_removed": count_workflow_runs,
             }

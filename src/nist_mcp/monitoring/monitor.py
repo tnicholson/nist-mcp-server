@@ -34,7 +34,7 @@ class ControlMonitor:
         connector_id: Optional[str] = None,
         check_type: str = "automated",
         custom_check_function: Optional[Callable] = None,
-        parameters: Optional[Dict[str, Any]] = None
+        parameters: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Start monitoring a specific control"""
         monitor_id = f"monitor_{control_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -47,14 +47,16 @@ class ControlMonitor:
             "custom_check_function": custom_check_function,
             "parameters": parameters or {},
             "next_check": datetime.now(),
-            "status": "active"
+            "status": "active",
         }
 
         # Start the monitoring task
         task = asyncio.create_task(self._monitor_loop(monitor_id))
         self.schedules[monitor_id] = task
 
-        logger.info(f"Started monitoring for control {control_id} every {check_interval_hours} hours")
+        logger.info(
+            f"Started monitoring for control {control_id} every {check_interval_hours} hours"
+        )
         return monitor_id
 
     def stop_monitoring(self, monitor_id: str) -> bool:
@@ -72,27 +74,31 @@ class ControlMonitor:
     def get_monitoring_status(self) -> Dict[str, Any]:
         """Get current monitoring status"""
         return {
-            "active_monitors": len([m for m in self.monitored_controls.values() if m["status"] == "active"]),
+            "active_monitors": len(
+                [m for m in self.monitored_controls.values() if m["status"] == "active"]
+            ),
             "monitored_controls": [
                 {
                     "monitor_id": mid,
                     "control_id": config["control_id"],
                     "interval_hours": config["interval_hours"],
                     "next_check": config["next_check"].isoformat(),
-                    "status": config["status"]
+                    "status": config["status"],
                 }
                 for mid, config in self.monitored_controls.items()
             ],
-            "total_scheduled_tasks": len(self.schedules)
+            "total_scheduled_tasks": len(self.schedules),
         }
 
-    async def run_immediate_check(self, control_id: str, connector_id: Optional[str] = None) -> Dict[str, Any]:
+    async def run_immediate_check(
+        self, control_id: str, connector_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Run an immediate check for a control"""
         monitor_config = {
             "control_id": control_id,
             "connector_id": connector_id,
             "check_type": "manual",
-            "parameters": {}
+            "parameters": {},
         }
 
         return await self._perform_check(monitor_config)
@@ -100,7 +106,10 @@ class ControlMonitor:
     async def _monitor_loop(self, monitor_id: str) -> None:
         """Main monitoring loop for a control"""
         try:
-            while monitor_id in self.monitored_controls and self.monitored_controls[monitor_id]["status"] == "active":
+            while (
+                monitor_id in self.monitored_controls
+                and self.monitored_controls[monitor_id]["status"] == "active"
+            ):
                 config = self.monitored_controls[monitor_id]
                 now = datetime.now()
 
@@ -109,21 +118,27 @@ class ControlMonitor:
                     result = await self._perform_check(config)
 
                     # Schedule next check
-                    config["next_check"] = now + timedelta(hours=config["interval_hours"])
+                    config["next_check"] = now + timedelta(
+                        hours=config["interval_hours"]
+                    )
 
                     # Log the check in history
-                    self.storage.record_monitoring_check({
-                        "control_id": config["control_id"],
-                        "check_type": config["check_type"],
-                        "connector_id": config["connector_id"],
-                        "status": result["status"],
-                        "result_details": result,
-                        "evidence_paths": result.get("evidence_paths", []),
-                        "next_check_scheduled": config["next_check"]
-                    })
+                    self.storage.record_monitoring_check(
+                        {
+                            "control_id": config["control_id"],
+                            "check_type": config["check_type"],
+                            "connector_id": config["connector_id"],
+                            "status": result["status"],
+                            "result_details": result,
+                            "evidence_paths": result.get("evidence_paths", []),
+                            "next_check_scheduled": config["next_check"],
+                        }
+                    )
 
                 # Wait for next check or until monitoring is stopped
-                await asyncio.sleep(min(60, (config["next_check"] - datetime.now()).total_seconds()))
+                await asyncio.sleep(
+                    min(60, (config["next_check"] - datetime.now()).total_seconds())
+                )
 
         except asyncio.CancelledError:
             logger.info(f"Monitoring cancelled for {monitor_id}")
@@ -159,10 +174,12 @@ class ControlMonitor:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat(),
                 "control_id": control_id,
-                "check_type": check_type
+                "check_type": check_type,
             }
 
-    async def _default_control_check(self, control_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def _default_control_check(
+        self, control_id: str, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Default control check implementation (basic status check)"""
         # This is a placeholder - in practice, this would check actual implementation status
         # For now, we'll simulate a check based on predetermined logic
@@ -191,11 +208,13 @@ class ControlMonitor:
             "details": {
                 "check_method": "default_simulation",
                 "parameters_used": parameters,
-                "confidence_score": confidence
-            }
+                "confidence_score": confidence,
+            },
         }
 
-    def get_control_monitoring_history(self, control_id: str, days: int = 30) -> List[Dict[str, Any]]:
+    def get_control_monitoring_history(
+        self, control_id: str, days: int = 30
+    ) -> List[Dict[str, Any]]:
         """Get monitoring history for a specific control"""
         return self.storage.get_monitoring_history(control_id=control_id, days=days)
 

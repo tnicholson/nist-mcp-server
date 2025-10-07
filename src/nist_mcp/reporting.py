@@ -29,21 +29,21 @@ class OSCALReportGenerator:
         self,
         gap_analysis_results: Dict[str, Any],
         organization_info: Optional[Dict[str, Any]] = None,
-        assessment_metadata: Optional[Dict[str, Any]] = None
+        assessment_metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Generate OSCAL Assessment Results document from gap analysis"""
 
         # Default metadata
         org_info = organization_info or {
             "name": "Assessment Organization",
-            "identifiers": []
+            "identifiers": [],
         }
 
         assessment_meta = assessment_metadata or {
             "title": "NIST Cybersecurity Framework Gap Analysis",
             "description": "Automated gap analysis assessment",
             "start": datetime.now(timezone.utc).isoformat(),
-            "end": datetime.now(timezone.utc).isoformat()
+            "end": datetime.now(timezone.utc).isoformat(),
         }
 
         # Build OSCAL Assessment Results structure
@@ -53,12 +53,16 @@ class OSCALReportGenerator:
                 "metadata": {
                     "title": assessment_meta.get("title", "Gap Analysis Report"),
                     "description": assessment_meta.get("description", ""),
-                    "start": assessment_meta.get("start", datetime.now(timezone.utc).isoformat()),
-                    "end": assessment_meta.get("end", datetime.now(timezone.utc).isoformat()),
+                    "start": assessment_meta.get(
+                        "start", datetime.now(timezone.utc).isoformat()
+                    ),
+                    "end": assessment_meta.get(
+                        "end", datetime.now(timezone.utc).isoformat()
+                    ),
                     "version": "1.0.0",
-                    "oscal-version": "1.1.2"
+                    "oscal-version": "1.1.2",
                 },
-                "results": []
+                "results": [],
             }
         }
 
@@ -66,9 +70,13 @@ class OSCALReportGenerator:
         analysis_type = gap_analysis_results.get("analysis_type", "basic")
 
         if analysis_type == "evidence_based":
-            oscal_report["assessment-results"]["results"] = self._build_evidence_based_results(gap_analysis_results)
+            oscal_report["assessment-results"]["results"] = (
+                self._build_evidence_based_results(gap_analysis_results)
+            )
         else:
-            oscal_report["assessment-results"]["results"] = self._build_basic_results(gap_analysis_results)
+            oscal_report["assessment-results"]["results"] = self._build_basic_results(
+                gap_analysis_results
+            )
 
         return oscal_report
 
@@ -85,14 +93,27 @@ class OSCALReportGenerator:
                 "title": f"Gap Analysis Finding for {control_id}",
                 "description": f"Control {control_id} is required but not implemented",
                 "props": [
-                    {
-                        "name": "implementation-status",
-                        "value": "not-implemented"
-                    },
+                    {"name": "implementation-status", "value": "not-implemented"},
                     {
                         "name": "priority",
-                        "value": "high" if control_id in ["AC-1", "AU-1", "CA-1", "CM-1", "CP-1", "IA-1", "IR-1", "PL-1", "RA-1", "SA-1", "SC-1", "SI-1"] else "medium"
-                    }
+                        "value": "high"
+                        if control_id
+                        in [
+                            "AC-1",
+                            "AU-1",
+                            "CA-1",
+                            "CM-1",
+                            "CP-1",
+                            "IA-1",
+                            "IR-1",
+                            "PL-1",
+                            "RA-1",
+                            "SA-1",
+                            "SC-1",
+                            "SI-1",
+                        ]
+                        else "medium",
+                    },
                 ],
                 "findings": [
                     {
@@ -101,15 +122,10 @@ class OSCALReportGenerator:
                         "description": f"Control {control_id} is missing from implementation",
                         "target": {
                             "target-id": control_id,
-                            "props": [
-                                {
-                                    "name": "control-id",
-                                    "value": control_id
-                                }
-                            ]
-                        }
+                            "props": [{"name": "control-id", "value": control_id}],
+                        },
                     }
-                ]
+                ],
             }
             results.append(result)
 
@@ -122,18 +138,17 @@ class OSCALReportGenerator:
                     "title": f"Successfully Implemented Controls in {family_data.get('family', 'Unknown')}",
                     "description": f"{family_data.get('implemented', 0)} controls implemented in this family",
                     "props": [
-                        {
-                            "name": "implementation-status",
-                            "value": "implemented"
-                        }
+                        {"name": "implementation-status", "value": "implemented"}
                     ],
-                    "findings": []
+                    "findings": [],
                 }
                 results.append(result)
 
         return results
 
-    def _build_evidence_based_results(self, gap_results: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _build_evidence_based_results(
+        self, gap_results: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Build OSCAL results for evidence-based gap analysis"""
         results = []
 
@@ -148,51 +163,42 @@ class OSCALReportGenerator:
             finding = {
                 "uuid": str(uuid4()),
                 "title": f"Evidence Evaluation for {control_id}",
-                "description": evaluation.get("evaluation_notes", f"Control {control_id} evaluation"),
+                "description": evaluation.get(
+                    "evaluation_notes", f"Control {control_id} evaluation"
+                ),
                 "target": {
                     "target-id": control_id,
-                    "props": [
-                        {
-                            "name": "control-id",
-                            "value": control_id
-                        }
-                    ]
+                    "props": [{"name": "control-id", "value": control_id}],
                 },
                 "props": [
-                    {
-                        "name": "evidence-confidence",
-                        "value": str(confidence)
-                    },
+                    {"name": "evidence-confidence", "value": str(confidence)},
                     {
                         "name": "evidence-count",
-                        "value": str(evaluation.get("evidence_count", 0))
-                    }
-                ]
+                        "value": str(evaluation.get("evidence_count", 0)),
+                    },
+                ],
             }
 
             # Add status-specific properties
             if status == "fully_implemented":
-                finding["props"].append({
-                    "name": "implementation-status",
-                    "value": "fully-implemented"
-                })
+                finding["props"].append(
+                    {"name": "implementation-status", "value": "fully-implemented"}
+                )
             elif status == "partially_implemented":
-                finding["props"].append({
-                    "name": "implementation-status",
-                    "value": "partially-implemented"
-                })
+                finding["props"].append(
+                    {"name": "implementation-status", "value": "partially-implemented"}
+                )
             else:
-                finding["props"].append({
-                    "name": "implementation-status",
-                    "value": "not-implemented"
-                })
+                finding["props"].append(
+                    {"name": "implementation-status", "value": "not-implemented"}
+                )
 
             result = {
                 "uuid": str(uuid4()),
                 "title": f"Assessment Result for {control_id}",
                 "description": f"Detailed evaluation of control {control_id}",
                 "findings": [finding],
-                "props": finding["props"]  # Copy props for backward compatibility
+                "props": finding["props"],  # Copy props for backward compatibility
             }
 
             results.append(result)
@@ -202,13 +208,13 @@ class OSCALReportGenerator:
     def generate_cmmc_readiness_report(
         self,
         scoring_results: Dict[str, Any],
-        organization_info: Optional[Dict[str, Any]] = None
+        organization_info: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Generate OSCAL Assessment Results for CMMC readiness scoring"""
 
         org_info = organization_info or {
             "name": "Assessment Organization",
-            "identifiers": []
+            "identifiers": [],
         }
 
         oscal_report = {
@@ -222,25 +228,26 @@ class OSCALReportGenerator:
                     "version": "1.0.0",
                     "oscal-version": "1.1.2",
                     "props": [
-                        {
-                            "name": "assessment-type",
-                            "value": "cmmc-readiness"
-                        },
+                        {"name": "assessment-type", "value": "cmmc-readiness"},
                         {
                             "name": "target-level",
-                            "value": str(scoring_results.get("target_level", 2))
+                            "value": str(scoring_results.get("target_level", 2)),
                         },
                         {
                             "name": "overall-maturity-level",
-                            "value": str(scoring_results.get("overall_maturity_level", 0))
+                            "value": str(
+                                scoring_results.get("overall_maturity_level", 0)
+                            ),
                         },
                         {
                             "name": "overall-confidence-score",
-                            "value": str(scoring_results.get("overall_confidence_score", 0))
-                        }
-                    ]
+                            "value": str(
+                                scoring_results.get("overall_confidence_score", 0)
+                            ),
+                        },
+                    ],
                 },
-                "results": []
+                "results": [],
             }
         }
 
@@ -252,24 +259,21 @@ class OSCALReportGenerator:
                 "title": f"Domain Assessment: {domain_data.get('description', domain_id)}",
                 "description": f"CMMC Domain {domain_id} scoring results",
                 "props": [
-                    {
-                        "name": "domain-id",
-                        "value": domain_id
-                    },
+                    {"name": "domain-id", "value": domain_id},
                     {
                         "name": "domain-maturity-level",
-                        "value": str(domain_data.get("maturity_level", 0))
+                        "value": str(domain_data.get("maturity_level", 0)),
                     },
                     {
                         "name": "domain-average-score",
-                        "value": str(domain_data.get("average_score", 0))
+                        "value": str(domain_data.get("average_score", 0)),
                     },
                     {
                         "name": "control-count",
-                        "value": str(domain_data.get("control_count", 0))
-                    }
+                        "value": str(domain_data.get("control_count", 0)),
+                    },
                 ],
-                "findings": []
+                "findings": [],
             }
 
             # Add findings for weak controls in this domain
@@ -280,19 +284,17 @@ class OSCALReportGenerator:
                         "uuid": str(uuid4()),
                         "title": f"Control {control_id} Maturity Assessment",
                         "description": f"Scored at Level {control_data.get('scored_level', 0)} with {control_data.get('confidence_score', 0)}% confidence",
-                        "target": {
-                            "target-id": control_id
-                        },
+                        "target": {"target-id": control_id},
                         "props": [
                             {
                                 "name": "maturity-level",
-                                "value": str(control_data.get("scored_level", 0))
+                                "value": str(control_data.get("scored_level", 0)),
                             },
                             {
                                 "name": "confidence-score",
-                                "value": str(control_data.get("confidence_score", 0))
-                            }
-                        ]
+                                "value": str(control_data.get("confidence_score", 0)),
+                            },
+                        ],
                     }
                     result["findings"].append(finding)
 
@@ -311,7 +313,7 @@ class HumanReadableReportGenerator:
         self,
         gap_analysis_results: Dict[str, Any],
         include_recommendations: bool = True,
-        include_details: bool = True
+        include_details: bool = True,
     ) -> str:
         """Generate human-readable gap analysis report"""
 
@@ -327,7 +329,10 @@ class HumanReadableReportGenerator:
 
         report_lines.append(f"Analysis Type: {analysis_type.replace('_', ' ').title()}")
         report_lines.append(f"Target Baseline: {target_baseline.title()}")
-        report_lines.append("Report Generated: " + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"))
+        report_lines.append(
+            "Report Generated: "
+            + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        )
         report_lines.append("")
 
         if analysis_type == "evidence_based":
@@ -350,9 +355,13 @@ class HumanReadableReportGenerator:
                 count = status_data.get("count", 0)
                 controls = status_data.get("controls", [])
                 status_desc = status_key.replace("_", " ").title()
-                report_lines.append(f"{status_desc}: {count} control{'s' if count != 1 else ''}")
+                report_lines.append(
+                    f"{status_desc}: {count} control{'s' if count != 1 else ''}"
+                )
 
-                if include_details and len(controls) <= 10:  # Show details if not too many
+                if (
+                    include_details and len(controls) <= 10
+                ):  # Show details if not too many
                     for control in controls[:5]:  # Limit to first 5
                         report_lines.append(f"    • {control}")
                     if len(controls) > 5:
@@ -369,7 +378,7 @@ class HumanReadableReportGenerator:
                 # Sort by implementation percentage (lowest first)
                 sorted_families = sorted(
                     family_analysis.items(),
-                    key=lambda x: x[1].get("implementation_percentage", 0)
+                    key=lambda x: x[1].get("implementation_percentage", 0),
                 )
 
                 report_lines.append("<15")
@@ -413,8 +422,28 @@ class HumanReadableReportGenerator:
 
                 if include_details:
                     report_lines.append("Controls:")
-                    for control in missing.get("controls", [])[:10]:  # Limit to first 10
-                        priority = " (HIGH)" if control in ["AC-1", "AU-1", "CA-1", "CM-1", "CP-1", "IA-1", "IR-1", "PL-1", "RA-1", "SA-1", "SC-1", "SI-1"] else ""
+                    for control in missing.get("controls", [])[
+                        :10
+                    ]:  # Limit to first 10
+                        priority = (
+                            " (HIGH)"
+                            if control
+                            in [
+                                "AC-1",
+                                "AU-1",
+                                "CA-1",
+                                "CM-1",
+                                "CP-1",
+                                "IA-1",
+                                "IR-1",
+                                "PL-1",
+                                "RA-1",
+                                "SA-1",
+                                "SC-1",
+                                "SI-1",
+                            ]
+                            else ""
+                        )
                         report_lines.append(f"    • {control}{priority}")
 
                     remaining = len(missing.get("controls", [])) - 10
@@ -443,9 +472,7 @@ class HumanReadableReportGenerator:
         return "\n".join(report_lines)
 
     def generate_cmmc_readiness_report(
-        self,
-        scoring_results: Dict[str, Any],
-        include_action_items: bool = True
+        self, scoring_results: Dict[str, Any], include_action_items: bool = True
     ) -> str:
         """Generate human-readable CMMC readiness report"""
 
@@ -462,7 +489,10 @@ class HumanReadableReportGenerator:
         report_lines.append(f"Target CMMC Level: {target_level}")
         report_lines.append(f"Assessment Result: Level {overall_level}")
         report_lines.append(".1f")
-        report_lines.append("Report Generated: " + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"))
+        report_lines.append(
+            "Report Generated: "
+            + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        )
         report_lines.append("")
 
         # Assessment summary
@@ -486,11 +516,12 @@ class HumanReadableReportGenerator:
 
         # Sort domains by maturity level (lowest first)
         sorted_domains = sorted(
-            domain_scores.items(),
-            key=lambda x: x[1].get("maturity_level", 0)
+            domain_scores.items(), key=lambda x: x[1].get("maturity_level", 0)
         )
 
-        report_lines.append(f"{'Domain':<20} {'Level':<6} {'Avg Score':<10} {'Max Score':<10} {'Status':<6}")
+        report_lines.append(
+            f"{'Domain':<20} {'Level':<6} {'Avg Score':<10} {'Max Score':<10} {'Status':<6}"
+        )
         report_lines.append("-" * 65)
 
         for domain_id, domain_data in sorted_domains:
@@ -535,8 +566,10 @@ class HumanReadableReportGenerator:
         # Control-level details
         control_scores = scoring_results.get("control_scores", {})
         low_confidence_controls = [
-            (ctrl_id, data) for ctrl_id, data in control_scores.items()
-            if data.get("confidence_score", 100) < 70  # Show controls with <70% confidence
+            (ctrl_id, data)
+            for ctrl_id, data in control_scores.items()
+            if data.get("confidence_score", 100)
+            < 70  # Show controls with <70% confidence
         ]
 
         if low_confidence_controls:
@@ -576,7 +609,7 @@ class ReportManager:
         gap_results: Optional[Dict[str, Any]] = None,
         cmmc_results: Optional[Dict[str, Any]] = None,
         organization_info: Optional[Dict[str, Any]] = None,
-        report_id: Optional[str] = None
+        report_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Generate comprehensive report package with all formats"""
 
@@ -587,7 +620,7 @@ class ReportManager:
             "report_id": report_id,
             "generated_at": timestamp.isoformat(),
             "organization": organization_info or {"name": "Default Organization"},
-            "reports": {}
+            "reports": {},
         }
 
         # Generate gap analysis reports
@@ -596,12 +629,14 @@ class ReportManager:
                 oscal_gap_report = self.oscal_generator.generate_gap_analysis_report(
                     gap_results, organization_info
                 )
-                human_gap_report = self.human_generator.generate_gap_analysis_report(gap_results)
+                human_gap_report = self.human_generator.generate_gap_analysis_report(
+                    gap_results
+                )
 
                 report_package["reports"]["gap_analysis"] = {
                     "oscal": oscal_gap_report,
                     "human_readable": human_gap_report,
-                    "results": gap_results
+                    "results": gap_results,
                 }
             except Exception as e:
                 logger.error(f"Error generating gap analysis reports: {e}")
@@ -612,12 +647,14 @@ class ReportManager:
                 oscal_cmmc_report = self.oscal_generator.generate_cmmc_readiness_report(
                     cmmc_results, organization_info
                 )
-                human_cmmc_report = self.human_generator.generate_cmmc_readiness_report(cmmc_results)
+                human_cmmc_report = self.human_generator.generate_cmmc_readiness_report(
+                    cmmc_results
+                )
 
                 report_package["reports"]["cmmc_readiness"] = {
                     "oscal": oscal_cmmc_report,
                     "human_readable": human_cmmc_report,
-                    "results": cmmc_results
+                    "results": cmmc_results,
                 }
             except Exception as e:
                 logger.error(f"Error generating CMMC readiness reports: {e}")
@@ -631,22 +668,22 @@ class ReportManager:
         self,
         results: Dict[str, Any],
         report_type: str,
-        organization_info: Optional[Dict[str, Any]] = None
+        organization_info: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Generate OSCAL-only report"""
 
         if report_type == "gap_analysis":
-            return self.oscal_generator.generate_gap_analysis_report(results, organization_info)
+            return self.oscal_generator.generate_gap_analysis_report(
+                results, organization_info
+            )
         elif report_type == "cmmc_readiness":
-            return self.oscal_generator.generate_cmmc_readiness_report(results, organization_info)
+            return self.oscal_generator.generate_cmmc_readiness_report(
+                results, organization_info
+            )
         else:
             raise ValueError(f"Unknown report type: {report_type}")
 
-    def generate_human_report(
-        self,
-        results: Dict[str, Any],
-        report_type: str
-    ) -> str:
+    def generate_human_report(self, results: Dict[str, Any], report_type: str) -> str:
         """Generate human-readable only report"""
 
         if report_type == "gap_analysis":
@@ -656,12 +693,14 @@ class ReportManager:
         else:
             raise ValueError(f"Unknown report type: {report_type}")
 
-    def _save_report_package(self, report_package: Dict[str, Any], report_id: str) -> None:
+    def _save_report_package(
+        self, report_package: Dict[str, Any], report_id: str
+    ) -> None:
         """Save complete report package to file"""
         try:
             report_file = self.storage_path / f"report_{report_id}.json"
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report_package, f, indent=2, default=str)
 
             logger.info(f"Saved report package: {report_file}")
@@ -674,7 +713,7 @@ class ReportManager:
         try:
             report_file = self.storage_path / f"report_{report_id}.json"
 
-            with open(report_file, 'r', encoding='utf-8') as f:
+            with open(report_file, "r", encoding="utf-8") as f:
                 return json.load(f)
 
         except Exception as e:
@@ -688,15 +727,23 @@ class ReportManager:
         try:
             for report_file in self.storage_path.glob("report_*.json"):
                 try:
-                    with open(report_file, 'r', encoding='utf-8') as f:
+                    with open(report_file, "r", encoding="utf-8") as f:
                         report_data = json.load(f)
-                        reports.append({
-                            "report_id": report_data.get("report_id", "unknown"),
-                            "generated_at": report_data.get("generated_at", "unknown"),
-                            "organization": report_data.get("organization", {}).get("name", "unknown"),
-                            "report_types": list(report_data.get("reports", {}).keys()),
-                            "file_path": str(report_file)
-                        })
+                        reports.append(
+                            {
+                                "report_id": report_data.get("report_id", "unknown"),
+                                "generated_at": report_data.get(
+                                    "generated_at", "unknown"
+                                ),
+                                "organization": report_data.get("organization", {}).get(
+                                    "name", "unknown"
+                                ),
+                                "report_types": list(
+                                    report_data.get("reports", {}).keys()
+                                ),
+                                "file_path": str(report_file),
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"Error reading report file {report_file}: {e}")
         except Exception as e:

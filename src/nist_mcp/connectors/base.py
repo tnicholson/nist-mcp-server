@@ -31,12 +31,16 @@ class BaseConnector(ABC):
         pass
 
     @abstractmethod
-    async def check_control(self, control_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def check_control(
+        self, control_id: str, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Perform a compliance check for a specific control"""
         pass
 
     @abstractmethod
-    async def collect_evidence(self, control_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def collect_evidence(
+        self, control_id: str, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Collect evidence for a control from the external system"""
         pass
 
@@ -51,7 +55,7 @@ class BaseConnector(ABC):
             "name": self.name,
             "type": self.__class__.__name__,
             "connected": self.connected,
-            "config_keys": list(self.config.keys()) if self.config else []
+            "config_keys": list(self.config.keys()) if self.config else [],
         }
 
 
@@ -71,7 +75,9 @@ class APIConnector(BaseConnector):
         pass
 
     @abstractmethod
-    async def make_request(self, endpoint: str, method: str = "GET", data: Dict = None) -> Dict[str, Any]:
+    async def make_request(
+        self, endpoint: str, method: str = "GET", data: Dict = None
+    ) -> Dict[str, Any]:
         """Make an API request"""
         pass
 
@@ -85,7 +91,9 @@ class DatabaseConnector(BaseConnector):
         self.connection = None
 
     @abstractmethod
-    async def execute_query(self, query: str, parameters: Dict = None) -> List[Dict[str, Any]]:
+    async def execute_query(
+        self, query: str, parameters: Dict = None
+    ) -> List[Dict[str, Any]]:
         """Execute a database query"""
         pass
 
@@ -123,12 +131,16 @@ class CloudServiceConnector(BaseConnector):
         self.credentials = config.get("credentials", {})
 
     @abstractmethod
-    async def get_resource_status(self, resource_type: str, resource_id: str) -> Dict[str, Any]:
+    async def get_resource_status(
+        self, resource_type: str, resource_id: str
+    ) -> Dict[str, Any]:
         """Get status of a cloud resource"""
         pass
 
     @abstractmethod
-    async def list_resources(self, resource_type: str, filters: Dict = None) -> List[Dict[str, Any]]:
+    async def list_resources(
+        self, resource_type: str, filters: Dict = None
+    ) -> List[Dict[str, Any]]:
         """List cloud resources"""
         pass
 
@@ -144,7 +156,9 @@ class ConnectorRegistry:
         """Register a connector type"""
         self.connector_types[name] = connector_class
 
-    def create_connector(self, connector_type: str, config: Dict[str, Any]) -> Optional[BaseConnector]:
+    def create_connector(
+        self, connector_type: str, config: Dict[str, Any]
+    ) -> Optional[BaseConnector]:
         """Create a connector instance"""
         if connector_type not in self.connector_types:
             logger.error(f"Unknown connector type: {connector_type}")
@@ -165,10 +179,7 @@ class ConnectorRegistry:
 
     def list_connectors(self) -> List[Dict[str, Any]]:
         """List all registered connectors"""
-        return [
-            connector.get_status()
-            for connector in self.connectors.values()
-        ]
+        return [connector.get_status() for connector in self.connectors.values()]
 
     async def connect_all(self) -> Dict[str, bool]:
         """Connect all registered connectors"""

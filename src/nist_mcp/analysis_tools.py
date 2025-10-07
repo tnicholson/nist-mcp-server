@@ -17,8 +17,10 @@ class NISTAnalysisTools:
         self.data_loader = data_loader
 
     async def gap_analysis(
-        self, implemented_controls: list[str], target_baseline: str = "moderate",
-        evidence_collection_id: str | None = None
+        self,
+        implemented_controls: list[str],
+        target_baseline: str = "moderate",
+        evidence_collection_id: str | None = None,
     ) -> dict[str, Any]:
         """Perform gap analysis between implemented controls and target baseline
 
@@ -47,18 +49,26 @@ class NISTAnalysisTools:
             # If evidence collection provided, perform detailed evidence evaluation
             if evidence_collection_id:
                 return await self._evidence_based_gap_analysis(
-                    implemented_controls, baseline_controls, evidence_collection_id, target_baseline
+                    implemented_controls,
+                    baseline_controls,
+                    evidence_collection_id,
+                    target_baseline,
                 )
 
             # Basic gap analysis (ID-based)
-            return await self._basic_gap_analysis(implemented_controls, baseline_controls, target_baseline)
+            return await self._basic_gap_analysis(
+                implemented_controls, baseline_controls, target_baseline
+            )
 
         except Exception as e:
             logger.error(f"Error performing gap analysis: {e}")
             raise
 
     async def _basic_gap_analysis(
-        self, implemented_controls: list[str], baseline_controls: set[str], target_baseline: str
+        self,
+        implemented_controls: list[str],
+        baseline_controls: set[str],
+        target_baseline: str,
     ) -> dict[str, Any]:
         """Perform basic gap analysis by comparing control IDs"""
         implemented_set = set(implemented_controls)
@@ -110,16 +120,23 @@ class NISTAnalysisTools:
         }
 
     async def _evidence_based_gap_analysis(
-        self, implemented_controls: list[str], baseline_controls: set[str],
-        evidence_collection_id: str, target_baseline: str
+        self,
+        implemented_controls: list[str],
+        baseline_controls: set[str],
+        evidence_collection_id: str,
+        target_baseline: str,
     ) -> dict[str, Any]:
         """Perform evidence-based gap analysis by evaluating evidence against control definitions"""
         try:
             from .evidence import evidence_manager
 
-            evidence_collection = evidence_manager.collections.get(evidence_collection_id)
+            evidence_collection = evidence_manager.collections.get(
+                evidence_collection_id
+            )
             if not evidence_collection:
-                raise ValueError(f"Evidence collection {evidence_collection_id} not found")
+                raise ValueError(
+                    f"Evidence collection {evidence_collection_id} not found"
+                )
 
             # Evaluate each baseline control against evidence
             evidence_evaluation = {}
@@ -151,7 +168,11 @@ class NISTAnalysisTools:
             total_implemented = len(fully_implemented) + len(partially_implemented)
 
             # Weighted compliance (partial gets 0.5, full gets 1.0)
-            compliance_score = (len(fully_implemented) + 0.5 * len(partially_implemented)) / total_required * 100
+            compliance_score = (
+                (len(fully_implemented) + 0.5 * len(partially_implemented))
+                / total_required
+                * 100
+            )
 
             # Family analysis
             family_analysis = self._analyze_evidence_by_family(
@@ -171,17 +192,33 @@ class NISTAnalysisTools:
                 "compliance_score": round(compliance_score, 2),
                 "control_evaluation": evidence_evaluation,
                 "implementation_status": {
-                    "fully_implemented": {"count": len(fully_implemented), "controls": fully_implemented},
-                    "partially_implemented": {"count": len(partially_implemented), "controls": partially_implemented},
-                    "not_implemented": {"count": len(not_implemented), "controls": not_implemented},
-                    "unknown_status": {"count": len(unknown_status), "controls": unknown_status}
+                    "fully_implemented": {
+                        "count": len(fully_implemented),
+                        "controls": fully_implemented,
+                    },
+                    "partially_implemented": {
+                        "count": len(partially_implemented),
+                        "controls": partially_implemented,
+                    },
+                    "not_implemented": {
+                        "count": len(not_implemented),
+                        "controls": not_implemented,
+                    },
+                    "unknown_status": {
+                        "count": len(unknown_status),
+                        "controls": unknown_status,
+                    },
                 },
                 "family_analysis": family_analysis,
                 "remediation_priorities": remediation_priorities,
                 "total_required": total_required,
                 "total_with_evidence": total_implemented,
-                "recommendations": self._generate_evidence_based_recommendations(evidence_evaluation),
-                "critical_gaps": self._identify_critical_evidence_gaps(evidence_evaluation)
+                "recommendations": self._generate_evidence_based_recommendations(
+                    evidence_evaluation
+                ),
+                "critical_gaps": self._identify_critical_evidence_gaps(
+                    evidence_evaluation
+                ),
             }
 
         except Exception as e:
@@ -554,7 +591,9 @@ class NISTAnalysisTools:
 
         return critical_gaps
 
-    async def _evaluate_control_evidence(self, control_id: str, evidence_collection: Any) -> dict[str, Any]:
+    async def _evaluate_control_evidence(
+        self, control_id: str, evidence_collection: Any
+    ) -> dict[str, Any]:
         """Evaluate evidence for a specific control against its definition"""
         try:
             # Load control definition
@@ -567,12 +606,14 @@ class NISTAnalysisTools:
                     "confidence": 0,
                     "evidence_count": 0,
                     "evaluation_notes": f"Control {control_id} not found in catalog",
-                    "gaps": ["Control definition not available"]
+                    "gaps": ["Control definition not available"],
                 }
 
             # Get relevant evidence
             evidence_items = evidence_collection.get_evidence_for_control(control_id)
-            approved_evidence = [e for e in evidence_items if e.status.value == "approved"]
+            approved_evidence = [
+                e for e in evidence_items if e.status.value == "approved"
+            ]
 
             if not approved_evidence:
                 return {
@@ -580,12 +621,14 @@ class NISTAnalysisTools:
                     "confidence": 0,
                     "evidence_count": len(evidence_items),
                     "evaluation_notes": "No approved evidence found",
-                    "gaps": ["Missing evidence for control implementation"]
+                    "gaps": ["Missing evidence for control implementation"],
                 }
 
             # Evaluate evidence against control requirements
             control_requirements = self._extract_control_requirements(control)
-            evidence_coverage = self._evaluate_evidence_coverage(control_requirements, approved_evidence)
+            evidence_coverage = self._evaluate_evidence_coverage(
+                control_requirements, approved_evidence
+            )
 
             # Determine implementation status
             coverage_score = evidence_coverage["coverage_percentage"] / 100.0
@@ -605,16 +648,12 @@ class NISTAnalysisTools:
                 "coverage": evidence_coverage,
                 "requirements_mapped": evidence_coverage["covered_requirements"],
                 "gaps": evidence_coverage["uncovered_requirements"],
-                "evaluation_notes": f"Evidence covers {coverage_score:.0%} of control requirements"
+                "evaluation_notes": f"Evidence covers {coverage_score:.0%} of control requirements",
             }
 
         except Exception as e:
             logger.error(f"Error evaluating evidence for control {control_id}: {e}")
-            return {
-                "status": "error",
-                "confidence": 0,
-                "error": str(e)
-            }
+            return {"status": "error", "confidence": 0, "error": str(e)}
 
     def _extract_control_requirements(self, control: dict) -> list[str]:
         """Extract key requirements from control definition"""
@@ -627,7 +666,7 @@ class NISTAnalysisTools:
                 prose = part.get("prose", "")
                 if prose:
                     # Break into meaningful requirements (sentences)
-                    sentences = [s.strip() for s in prose.split('.') if s.strip()]
+                    sentences = [s.strip() for s in prose.split(".") if s.strip()]
                     requirements.extend(sentences)
 
         # Extract from properties
@@ -646,7 +685,9 @@ class NISTAnalysisTools:
 
         return requirements[:10]  # Limit to avoid overload
 
-    def _evaluate_evidence_coverage(self, requirements: list[str], evidence_items: list) -> dict[str, Any]:
+    def _evaluate_evidence_coverage(
+        self, requirements: list[str], evidence_items: list
+    ) -> dict[str, Any]:
         """Evaluate how well evidence covers control requirements"""
         covered_requirements = []
         uncovered_requirements = []
@@ -666,13 +707,36 @@ class NISTAnalysisTools:
                 evidence_desc = evidence.description.lower()
 
                 # Check for relevant keywords/artifacts
-                if any(keyword in req_lower for keyword in [
-                    "policy", "procedure", "access", "log", "audit", "monitor",
-                    "control", "implement", "document", "test", "review", "approve"
-                ]) and any(keyword in (evidence_content + evidence_desc) for keyword in [
-                    "policy", "procedure", evidence.evidence_type.value.replace("_", " "),
-                    "document", "test", "review", "log", "configuration", "tool"
-                ]):
+                if any(
+                    keyword in req_lower
+                    for keyword in [
+                        "policy",
+                        "procedure",
+                        "access",
+                        "log",
+                        "audit",
+                        "monitor",
+                        "control",
+                        "implement",
+                        "document",
+                        "test",
+                        "review",
+                        "approve",
+                    ]
+                ) and any(
+                    keyword in (evidence_content + evidence_desc)
+                    for keyword in [
+                        "policy",
+                        "procedure",
+                        evidence.evidence_type.value.replace("_", " "),
+                        "document",
+                        "test",
+                        "review",
+                        "log",
+                        "configuration",
+                        "tool",
+                    ]
+                ):
                     covered = True
                     break
 
@@ -682,8 +746,7 @@ class NISTAnalysisTools:
                 uncovered_requirements.append(req)
 
         coverage_percentage = (
-            len(covered_requirements) / len(requirements) * 100
-            if requirements else 0
+            len(covered_requirements) / len(requirements) * 100 if requirements else 0
         )
 
         return {
@@ -693,35 +756,48 @@ class NISTAnalysisTools:
             "coverage_percentage": round(coverage_percentage, 2),
             "details": {
                 "covered": covered_requirements,
-                "uncovered": uncovered_requirements
-            }
+                "uncovered": uncovered_requirements,
+            },
         }
 
-    def _analyze_evidence_by_family(self, evidence_evaluation: dict, baseline_controls: set) -> dict[str, Any]:
+    def _analyze_evidence_by_family(
+        self, evidence_evaluation: dict, baseline_controls: set
+    ) -> dict[str, Any]:
         """Analyze evidence coverage by control family"""
-        family_analysis = defaultdict(lambda: {
-            "total_controls": 0,
-            "fully_implemented": 0,
-            "partially_implemented": 0,
-            "not_implemented": 0,
-            "no_evidence": 0,
-            "average_confidence": 0,
-            "controls": []
-        })
+        family_analysis = defaultdict(
+            lambda: {
+                "total_controls": 0,
+                "fully_implemented": 0,
+                "partially_implemented": 0,
+                "not_implemented": 0,
+                "no_evidence": 0,
+                "average_confidence": 0,
+                "controls": [],
+            }
+        )
 
         for control_id in baseline_controls:
             family = control_id[:2]
-            eval_data = evidence_evaluation.get(control_id, {"status": "unknown", "confidence": 0})
+            eval_data = evidence_evaluation.get(
+                control_id, {"status": "unknown", "confidence": 0}
+            )
 
             family_analysis[family]["total_controls"] += 1
-            family_analysis[family]["controls"].append({
-                "id": control_id,
-                "status": eval_data.get("status", "unknown"),
-                "confidence": eval_data.get("confidence", 0)
-            })
+            family_analysis[family]["controls"].append(
+                {
+                    "id": control_id,
+                    "status": eval_data.get("status", "unknown"),
+                    "confidence": eval_data.get("confidence", 0),
+                }
+            )
 
             status = eval_data.get("status", "unknown")
-            if status in ["fully_implemented", "partially_implemented", "not_implemented", "no_evidence"]:
+            if status in [
+                "fully_implemented",
+                "partially_implemented",
+                "not_implemented",
+                "no_evidence",
+            ]:
                 family_analysis[family][status] += 1
 
         # Calculate averages and percentages
@@ -729,76 +805,105 @@ class NISTAnalysisTools:
             total = data["total_controls"]
             if total > 0:
                 confidences = [c["confidence"] for c in data["controls"]]
-                data["average_confidence"] = round(sum(confidences) / len(confidences), 2)
+                data["average_confidence"] = round(
+                    sum(confidences) / len(confidences), 2
+                )
 
                 data["implementation_percentage"] = round(
-                    (data["fully_implemented"] + data["partially_implemented"]) / total * 100, 2
+                    (data["fully_implemented"] + data["partially_implemented"])
+                    / total
+                    * 100,
+                    2,
                 )
 
         return dict(family_analysis)
 
-    def _prioritize_remediation(self, evidence_evaluation: dict,
-                               not_implemented: list, partially_implemented: list) -> list[dict[str, Any]]:
+    def _prioritize_remediation(
+        self,
+        evidence_evaluation: dict,
+        not_implemented: list,
+        partially_implemented: list,
+    ) -> list[dict[str, Any]]:
         """Prioritize remediation efforts based on evidence gaps"""
         priorities = []
 
         # Critical controls that should be prioritized
         critical_controls = {
-            "AC-1", "AU-1", "CA-1", "CM-1", "CP-1", "IA-1", "IR-1",
-            "PL-1", "RA-1", "SA-1", "SC-1", "SI-1"
+            "AC-1",
+            "AU-1",
+            "CA-1",
+            "CM-1",
+            "CP-1",
+            "IA-1",
+            "IR-1",
+            "PL-1",
+            "RA-1",
+            "SA-1",
+            "SC-1",
+            "SI-1",
         }
 
         # High priority: critical controls not implemented
         for control_id in not_implemented:
             if control_id in critical_controls:
                 eval_data = evidence_evaluation.get(control_id, {})
-                priorities.append({
-                    "priority": "critical",
-                    "control_id": control_id,
-                    "action": "urgent_implementation",
-                    "reason": "Critical foundational control with no evidence of implementation",
-                    "gaps": eval_data.get("gaps", [])
-                })
+                priorities.append(
+                    {
+                        "priority": "critical",
+                        "control_id": control_id,
+                        "action": "urgent_implementation",
+                        "reason": "Critical foundational control with no evidence of implementation",
+                        "gaps": eval_data.get("gaps", []),
+                    }
+                )
 
         # High priority: critical controls partially implemented
         for control_id in partially_implemented:
             if control_id in critical_controls:
                 eval_data = evidence_evaluation.get(control_id, {})
-                priorities.append({
-                    "priority": "high",
-                    "control_id": control_id,
-                    "action": "enhance_implementation",
-                    "reason": "Critical control with incomplete evidence",
-                    "gaps": eval_data.get("gaps", [])
-                })
+                priorities.append(
+                    {
+                        "priority": "high",
+                        "control_id": control_id,
+                        "action": "enhance_implementation",
+                        "reason": "Critical control with incomplete evidence",
+                        "gaps": eval_data.get("gaps", []),
+                    }
+                )
 
         # Medium priority: other not implemented controls
         for control_id in not_implemented:
             if control_id not in critical_controls:
                 eval_data = evidence_evaluation.get(control_id, {})
-                priorities.append({
-                    "priority": "medium",
-                    "control_id": control_id,
-                    "action": "implement",
-                    "reason": "Required control not implemented",
-                    "gaps": eval_data.get("gaps", [])
-                })
+                priorities.append(
+                    {
+                        "priority": "medium",
+                        "control_id": control_id,
+                        "action": "implement",
+                        "reason": "Required control not implemented",
+                        "gaps": eval_data.get("gaps", []),
+                    }
+                )
 
         # Low priority: partially implemented controls needing enhancement
         for control_id in partially_implemented:
             if control_id not in critical_controls:
                 eval_data = evidence_evaluation.get(control_id, {})
-                priorities.append({
-                    "priority": "low",
-                    "control_id": control_id,
-                    "action": "enhance",
-                    "reason": "Control needs additional evidence",
-                    "gaps": eval_data.get("gaps", [])
-                })
+                priorities.append(
+                    {
+                        "priority": "low",
+                        "control_id": control_id,
+                        "action": "enhance",
+                        "reason": "Control needs additional evidence",
+                        "gaps": eval_data.get("gaps", []),
+                    }
+                )
 
         return priorities
 
-    def _generate_evidence_based_recommendations(self, evidence_evaluation: dict) -> list[str]:
+    def _generate_evidence_based_recommendations(
+        self, evidence_evaluation: dict
+    ) -> list[str]:
         """Generate recommendations based on evidence evaluation"""
         recommendations = []
 
@@ -825,24 +930,44 @@ class NISTAnalysisTools:
             )
 
         # Evidence quality recommendations
-        approved_evidence_total = sum(e.get("evidence_count", 0) for e in evidence_evaluation.values())
+        approved_evidence_total = sum(
+            e.get("evidence_count", 0) for e in evidence_evaluation.values()
+        )
         if approved_evidence_total < len(evidence_evaluation) * 2:
-            recommendations.append("INCREASE EVIDENCE: Consider adding more evidence types per control (policy + procedure + test results)")
+            recommendations.append(
+                "INCREASE EVIDENCE: Consider adding more evidence types per control (policy + procedure + test results)"
+            )
 
         # Critical gaps
         critical_missing = []
         for control_id, eval_data in evidence_evaluation.items():
             if eval_data.get("status") in ["not_implemented", "no_evidence"]:
                 family = control_id[:2]
-                if family in ["AC", "AU", "CA", "CM", "IA", "IR", "PL", "RA", "SA", "SC", "SI"]:
+                if family in [
+                    "AC",
+                    "AU",
+                    "CA",
+                    "CM",
+                    "IA",
+                    "IR",
+                    "PL",
+                    "RA",
+                    "SA",
+                    "SC",
+                    "SI",
+                ]:
                     critical_missing.append(control_id)
 
         if critical_missing:
-            recommendations.append(f"PRIORITY FOCUS: Implement critical controls: {', '.join(critical_missing[:5])}{'...' if len(critical_missing) > 5 else ''}")
+            recommendations.append(
+                f"PRIORITY FOCUS: Implement critical controls: {', '.join(critical_missing[:5])}{'...' if len(critical_missing) > 5 else ''}"
+            )
 
         # Status improvements
         if no_evidence > 0:
-            recommendations.append(f"COLLECT EVIDENCE: {no_evidence} controls have no approved evidence - start evidence collection process")
+            recommendations.append(
+                f"COLLECT EVIDENCE: {no_evidence} controls have no approved evidence - start evidence collection process"
+            )
 
         return recommendations
 
@@ -868,7 +993,7 @@ class NISTAnalysisTools:
             "IA": "Identification and Authentication",
             "IR": "Incident Response",
             "SC": "System and Communications Protection",
-            "SI": "System and Information Integrity"
+            "SI": "System and Information Integrity",
         }
 
         for family, status_list in family_status.items():
@@ -885,7 +1010,9 @@ class NISTAnalysisTools:
 
         return critical_gaps
 
-    async def cmmc_readiness_scoring(self, evidence_collection_id: str, target_level: int = 2) -> dict[str, Any]:
+    async def cmmc_readiness_scoring(
+        self, evidence_collection_id: str, target_level: int = 2
+    ) -> dict[str, Any]:
         """Generate CMMC Level 1-3 readiness scores per control/domain
 
         Args:
@@ -895,9 +1022,13 @@ class NISTAnalysisTools:
         try:
             from .evidence import evidence_manager
 
-            evidence_collection = evidence_manager.collections.get(evidence_collection_id)
+            evidence_collection = evidence_manager.collections.get(
+                evidence_collection_id
+            )
             if not evidence_collection:
-                raise ValueError(f"Evidence collection {evidence_collection_id} not found")
+                raise ValueError(
+                    f"Evidence collection {evidence_collection_id} not found"
+                )
 
             # Get CMMC controls for target level
             cmmc_data = await self.data_loader.load_cmmc_framework()
@@ -915,8 +1046,12 @@ class NISTAnalysisTools:
             domain_scores = defaultdict(list)
 
             for control_id in level_controls:
-                evaluation = await self._evaluate_control_evidence(control_id, evidence_collection)
-                confidence_score = evaluation.get("confidence", 0) * 100  # Convert to percentage
+                evaluation = await self._evaluate_control_evidence(
+                    control_id, evidence_collection
+                )
+                confidence_score = (
+                    evaluation.get("confidence", 0) * 100
+                )  # Convert to percentage
 
                 # Map to maturity levels (simplified)
                 if confidence_score >= 80:
@@ -933,7 +1068,7 @@ class NISTAnalysisTools:
                     "confidence_score": round(confidence_score, 1),
                     "target_level": target_level,
                     "evidence_status": evaluation.get("status", "unknown"),
-                    "gaps": evaluation.get("gaps", [])
+                    "gaps": evaluation.get("gaps", []),
                 }
 
                 # Group by domain (first 2 characters)
@@ -958,13 +1093,21 @@ class NISTAnalysisTools:
                     "min_score": min_score,
                     "max_score": max_score,
                     "control_count": weight,
-                    "maturity_level": min(target_level, int(min_score)),  # Domain level limited by min
-                    "description": self._get_domain_description(domain)
+                    "maturity_level": min(
+                        target_level, int(min_score)
+                    ),  # Domain level limited by min
+                    "description": self._get_domain_description(domain),
                 }
 
             # Overall organization score (weighted average of domain minimums)
             total_weight = sum(domain_weight.values())
-            weighted_score = sum(domain_summary[d]["min_score"] * domain_weight[d] for d in domain_weight) / total_weight
+            weighted_score = (
+                sum(
+                    domain_summary[d]["min_score"] * domain_weight[d]
+                    for d in domain_weight
+                )
+                / total_weight
+            )
             overall_maturity_level = min(target_level, int(weighted_score))
 
             return {
@@ -977,9 +1120,11 @@ class NISTAnalysisTools:
                     "level_0": "Not implemented (<40% confidence)",
                     "level_1": "Basic implementation (40-59% confidence)",
                     "level_2": "Partial/functional implementation (60-79% confidence)",
-                    "level_3": "Full implementation with evidence (≥80% confidence)"
+                    "level_3": "Full implementation with evidence (≥80% confidence)",
                 },
-                "recommendations": self._generate_cmmc_improvement_recommendations(domain_summary, control_scores)
+                "recommendations": self._generate_cmmc_improvement_recommendations(
+                    domain_summary, control_scores
+                ),
             }
 
         except Exception as e:
@@ -1008,11 +1153,13 @@ class NISTAnalysisTools:
             "SA": "System and Services Acquisition",
             "SC": "System and Communications Protection",
             "SI": "System and Information Integrity",
-            "SR": "Supply Chain Risk Management"
+            "SR": "Supply Chain Risk Management",
         }
         return descriptions.get(domain, f"Domain {domain}")
 
-    def _generate_cmmc_improvement_recommendations(self, domain_scores: dict, control_scores: dict) -> list[str]:
+    def _generate_cmmc_improvement_recommendations(
+        self, domain_scores: dict, control_scores: dict
+    ) -> list[str]:
         """Generate CMMC-specific improvement recommendations"""
         recommendations = []
 
@@ -1025,7 +1172,9 @@ class NISTAnalysisTools:
         weak_domains.sort(key=lambda x: x[1])  # Sort by lowest maturity first
 
         if weak_domains:
-            recommendations.append("FOCUS AREAS: Improve domains with low maturity scores:")
+            recommendations.append(
+                "FOCUS AREAS: Improve domains with low maturity scores:"
+            )
             for domain, level in weak_domains[:3]:  # Top 3 weakest domains
                 domain_name = self._get_domain_description(domain)
                 recommendations.append(f"  • {domain_name} (current level: {level})")
@@ -1039,13 +1188,21 @@ class NISTAnalysisTools:
         weak_controls.sort(key=lambda x: x[1])  # Lowest confidence first
 
         if weak_controls:
-            recommendations.append("CRITICAL CONTROLS: Address controls with low confidence scores:")
+            recommendations.append(
+                "CRITICAL CONTROLS: Address controls with low confidence scores:"
+            )
             for control_id, confidence in weak_controls[:5]:  # Top 5 weakest controls
-                recommendations.append(f"  • {control_id} ({confidence:.1f}% confidence)")
+                recommendations.append(
+                    f"  • {control_id} ({confidence:.1f}% confidence)"
+                )
 
         # Evidence quality recommendations
-        low_evidence_count = sum(1 for s in control_scores.values() if s["confidence_score"] < 40)
+        low_evidence_count = sum(
+            1 for s in control_scores.values() if s["confidence_score"] < 40
+        )
         if low_evidence_count > 0:
-            recommendations.append(f"EVIDENCE GAP: {low_evidence_count} controls lack sufficient evidence")
+            recommendations.append(
+                f"EVIDENCE GAP: {low_evidence_count} controls lack sufficient evidence"
+            )
 
         return recommendations
