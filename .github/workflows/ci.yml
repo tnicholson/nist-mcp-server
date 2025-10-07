@@ -124,9 +124,13 @@ jobs:
       with:
         version: "latest"
 
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
     - name: Install build dependencies
       run: |
-        uv tool install build
+        uv sync --group build || uv add build
 
     - name: Build package
       run: |
