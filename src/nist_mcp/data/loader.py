@@ -22,6 +22,7 @@ class NISTDataLoader:
         self._schemas_cache: dict[str, Any] | None = None
         self._baselines_cache: dict[str, Any] | None = None
         self._sp800171_baseline_cache: dict[str, Any] | None = None
+        self._sp800171_catalog_cache: dict[str, Any] | None = None
         self._cmmc_cache: dict[str, Any] | None = None
         self._fedramp_cache: dict[str, Any] | None = None
 
@@ -202,6 +203,24 @@ class NISTDataLoader:
 
         logger.info("Loaded SP 800-171 CUI baseline profile")
         return self._sp800171_baseline_cache
+
+    async def load_sp800171_catalog(self, force_reload: bool = False) -> dict[str, Any]:
+        """Load NIST SP 800-171 complete controls catalog"""
+        if self._sp800171_catalog_cache is not None and not force_reload:
+            return self._sp800171_catalog_cache
+
+        catalog_file = self.data_path / "nist-sources/sp800-171/catalog.json"
+
+        if not catalog_file.exists():
+            logger.warning(f"SP 800-171 catalog file not found: {catalog_file}")
+            raise FileNotFoundError(f"SP 800-171 catalog file not found: {catalog_file}")
+
+        async with aiofiles.open(catalog_file, encoding="utf-8") as f:
+            content = await f.read()
+            self._sp800171_catalog_cache = json.loads(content)
+
+        logger.info("Loaded SP 800-171 catalog")
+        return self._sp800171_catalog_cache
 
     async def load_cmmc_framework(self, force_reload: bool = False) -> dict[str, Any]:
         """Load CMMC framework data"""
