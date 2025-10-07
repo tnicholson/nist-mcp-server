@@ -143,12 +143,15 @@ dmypy.json
 data/nist-sources/
 data/oscal-schemas/
 
+# Database files - contain sensitive historical data
+*.db
+*.sqlite
+*.sqlite3
+data/history.db
+
 # Keep examples and structure
 !data/examples/
 !data/README.md
-
-# UV lock file (should be committed for reproducible builds)
-# uv.lock
 
 # Coverage reports
 htmlcov/
