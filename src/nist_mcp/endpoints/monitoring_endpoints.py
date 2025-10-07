@@ -6,27 +6,10 @@ from typing import Any, Optional
 
 from mcp.server import FastMCP
 
-from ..history.storage import HistoricalStorage
-from ..monitoring.monitor import ControlMonitor
-from ..workflows.strands import StrandsOrchestrator, create_compliance_assessment_strand
-from ..connectors.base import connector_registry
-from ..connectors.aws import AWSConnector
+from ..workflows.strands import create_compliance_assessment_strand
+from ..infrastructure.container import get_container
 
 logger = logging.getLogger(__name__)
-
-# Initialize components globally (refactor later to dependency injection)
-_storage = HistoricalStorage()
-_monitor = ControlMonitor(_storage)
-_orchestrator = StrandsOrchestrator(_storage, _monitor)
-
-# Register connector types
-connector_registry.register_connector_type("aws", AWSConnector)
-
-
-async def _ensure_initialized():
-    """Ensure components are initialized"""
-    await _storage.initialize()
-    await _orchestrator.orchestrator.storage.initialize()  # type: ignore
 
 
 def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
@@ -79,9 +62,10 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         control_id: str, check_interval_hours: int = 24, connector_id: Optional[str] = None
     ) -> dict[str, Any]:
         """Start continuous monitoring for a specific control"""
-        await _ensure_initialized()
+        container = get_container()
+        monitor = await container.get_monitor_service()
 
-        monitor_id = _monitor.start_monitoring_control(
+        monitor_id = monitor.start_monitoring_control(
             control_id=control_id,
             check_interval_hours=check_interval_hours,
             connector_id=connector_id,
@@ -99,7 +83,9 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
     @app.tool()
     async def stop_continuous_monitoring(monitor_id: str) -> dict[str, Any]:
         """Stop continuous monitoring for a control"""
-        success = _monitor.stop_monitoring(monitor_id)
+        container = get_container()
+        monitor = await container.get_monitor_service()
+        success = monitor.stop_monitoring(monitor_id)
 
         if success:
             return {
@@ -117,14 +103,22 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
     @app.tool()
     async def get_monitoring_status() -> dict[str, Any]:
         """Get status of all monitoring activities"""
-        return _monitor.get_monitoring_status()
+        container = get_container()
+        monitor = await container.get_monitor_service()
+        return monitor.get_monitoring_status()
 
     @app.tool()
     async def run_manual_check(
         control_id: str, connector_id: Optional[str] = None
     ) -> dict[str, Any]:
         """Run a manual compliance check for a control"""
-        await _ensure_initialized()
+        container = get_container()
+        monitor = await container.get_monitor_service()
+
+        # TODO: Implement connector registration through container
+        # For now, use direct registry access for backward compatibility
+        from ..connectors.base import connector_registry
+        from ..connectors.aws import AWSConnector
 
         # Ensure AWS connector is available if requested
         if connector_id and connector_id.startswith("aws"):
@@ -134,12 +128,13 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
                 connector = connector_registry.create_connector("aws", aws_config)
                 if connector:
                     await connector.connect()
-                    _monitor.register_connector(connector_id, connector)
+                    monitor.register_connector(connector_id, connector)
 
-        result = await _monitor.run_immediate_check(control_id, connector_id)
+        result = await monitor.run_immediate_check(control_id, connector_id)
 
         # Record the check in history
-        _storage.record_monitoring_check(
+        storage = await container.get_storage_service()
+        storage.record_monitoring_check(
             {
                 "control_id": control_id,
                 "check_type": "manual",
@@ -159,10 +154,11 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         baseline: str = "moderate",
     ) -> dict[str, Any]:
         """Execute an automated compliance workflow (Strand)"""
-        await _ensure_initialized()
+        container = get_container()
+        orchestrator = await container.get_orchestrator_service()
 
         # Register strand definitions
-        _orchestrator.register_strand_definition(
+        orchestrator.register_strand_definition(
             "compliance_assessment",
             "Compliance Assessment Workflow",
             "Automated compliance assessment with gap analysis and remediation planning",
@@ -170,11 +166,11 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         )
 
         # Create and execute strand
-        strand = _orchestrator.create_strand(
+        strand = orchestrator.create_strand(
             workflow_type, target_controls, baseline=baseline
         )
 
-        result = await _orchestrator.execute_strand_async(strand)
+        result = await orchestrator.execute_strand_async(strand)
 
         return result
 
@@ -183,35 +179,41 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         workflow_id: str, limit: int = 10
     ) -> list[dict[str, Any]]:
         """Get execution history for a workflow"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        return _storage.get_workflow_runs(workflow_id, limit)
+        return storage.get_workflow_runs(workflow_id, limit)
 
     @app.tool()
     async def get_active_workflows() -> list[dict[str, Any]]:
         """Get all currently active workflows"""
-        return _orchestrator.get_active_strands()
+        container = get_container()
+        orchestrator = await container.get_orchestrator_service()
+        return orchestrator.get_active_strands()
 
     @app.tool()
     async def get_assessment_history(limit: int = 50) -> list[dict[str, Any]]:
         """Get historical assessment data"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        return _storage.get_assessments(limit=limit)
+        return storage.get_assessments(limit=limit)
 
     @app.tool()
     async def get_assessment_trends(days: int = 30) -> dict[str, Any]:
         """Get assessment trends over time"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        return _storage.get_assessment_trends(days)
+        return storage.get_assessment_trends(days)
 
     @app.tool()
     async def save_assessment(assessment_data: dict[str, Any]) -> dict[str, Any]:
         """Save assessment results to history"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        assessment_id = _storage.save_assessment(assessment_data)
+        assessment_id = storage.save_assessment(assessment_data)
 
         return {
             "assessment_id": assessment_id,
@@ -230,7 +232,8 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         due_date: Optional[str] = None,
     ) -> dict[str, Any]:
         """Create a remediation action for a control"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
         # Validate priority
         if priority not in ["critical", "high", "medium", "low"]:
@@ -274,7 +277,7 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
             ]
             evidence_required = [f"Updated {control_id} documentation", "Training records"]
 
-        action_id = _storage.create_remediation_action(
+        action_id = storage.create_remediation_action(
             {
                 "control_id": control_id,
                 "assessment_id": assessment_id,
@@ -304,9 +307,10 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         """Get remediation actions with optional filtering"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        return _storage.get_remediation_actions(
+        return storage.get_remediation_actions(
             status_filter=status_filter,
             priority_filter=priority_filter,
             control_id=control_id,
@@ -316,23 +320,25 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
     @app.tool()
     async def get_overdue_remediations() -> list[dict[str, Any]]:
         """Get all overdue remediation actions"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
-        return _storage.get_overdue_remediation_actions()
+        return storage.get_overdue_remediation_actions()
 
     @app.tool()
     async def update_remediation_status(
         action_id: str, status: str, outcome: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
         """Update the status of a remediation action"""
-        await _ensure_initialized()
+        container = get_container()
+        storage = await container.get_storage_service()
 
         # Validate status
         valid_statuses = ["pending", "in_progress", "completed", "cancelled"]
         if status not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
 
-        success = _storage.update_remediation_status(action_id, status, outcome)
+        success = storage.update_remediation_status(action_id, status, outcome)
 
         if success:
             return {
@@ -354,11 +360,17 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         connector_type: str, config: dict[str, Any]
     ) -> dict[str, Any]:
         """Register a new connector for external system integration"""
+        from ..connectors.base import connector_registry
+        from ..connectors.aws import AWSConnector
+
         connector = connector_registry.create_connector(connector_type, config)
 
         if connector:
             # Save connector in storage
-            connector_id = _storage.register_connector(
+            container = get_container()
+            storage = await container.get_storage_service()
+
+            connector_id = storage.register_connector(
                 {
                     "name": config.get("name", connector.connector_id),
                     "type": connector_type,
@@ -368,7 +380,9 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
             )
 
             # Register with monitor system
-            _monitor.register_connector(connector.connector_id, connector)
+            if container.config.enable_monitoring:
+                monitor = await container.get_monitor_service()
+                monitor.register_connector(connector.connector_id, connector)
 
             return {
                 "connector_id": connector_id,
@@ -385,6 +399,7 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
     @app.tool()
     async def list_connectors() -> list[dict[str, Any]]:
         """List all registered connectors"""
+        from ..connectors.base import connector_registry
         return connector_registry.list_connectors()
 
     @app.tool()
@@ -392,12 +407,13 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         control_id: Optional[str] = None, days: int = 7
     ) -> list[dict[str, Any]]:
         """Get monitoring check history"""
-        await _ensure_initialized()
+        container = get_container()
+        monitor = await container.get_monitor_service()
 
         return (
-            _monitor.get_all_monitoring_history(days)
+            monitor.get_all_monitoring_history(days)
             if control_id is None
-            else _monitor.get_control_monitoring_history(control_id, days)
+            else monitor.get_control_monitoring_history(control_id, days)
         )
 
     @app.tool()
@@ -414,8 +430,10 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
         result = await analysis.gap_analysis(implemented_controls, target_baseline)
 
         # Save to history
-        await _ensure_initialized()
-        assessment_id = _storage.save_assessment(
+        container = get_container()
+        storage = await container.get_storage_service()
+
+        assessment_id = storage.save_assessment(
             {
                 "assessment_type": "gap_analysis_with_history",
                 "target_baseline": target_baseline,
@@ -433,7 +451,7 @@ def register_monitoring_endpoints(app: FastMCP, loader: Any) -> None:
             remediation_actions = []
 
             for control_id in missing_controls:
-                action_id = _storage.create_remediation_action(
+                action_id = storage.create_remediation_action(
                     {
                         "control_id": control_id,
                         "assessment_id": assessment_id,
