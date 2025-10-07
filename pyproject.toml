@@ -109,21 +109,10 @@ select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
-    "ARG", # flake8-unused-arguments
-    "SIM", # flake8-simplify
-    "S",   # bandit (security)
-    "N",   # pep8-naming
-    "D",   # pydocstyle
     "RUF", # ruff-specific rules
 ]
 ignore = [
-    "D100", # Missing docstring in public module
-    "D104", # Missing docstring in public package
-    "D203", # 1 blank line required before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
     "S101", # Use of assert detected (allow in tests)
-    "S603", # subprocess call: check for execution of untrusted input
-    "S607", # Starting a process with a partial executable path
 ]
 
 [tool.ruff.lint.per-file-ignores]
