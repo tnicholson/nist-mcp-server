@@ -1,154 +1,209 @@
 # NIST MCP Server
 
-A Model Context Protocol (MCP) server providing comprehensive access to NIST cybersecurity frameworks, controls, and OSCAL processing tools. This server enables AI assistants and applications to query, search, and analyze NIST security controls and frameworks through a standardized interface.
+A professional Model Context Protocol (MCP) server providing comprehensive access to NIST cybersecurity frameworks and controls. Enables AI assistants and applications to query, analyze, and manage NIST security controls through a standardized, secure interface.
 
-## Features
+## 🚀 Quick Start
 
-### 🔐 NIST SP 800-53 Rev 5 Controls
-- Complete catalog of security controls with detailed descriptions
-- Control family organization (AC, AU, AT, CM, CP, etc.)
-- Control enhancements and implementation guidance
-- Search controls by keyword, family, or ID
-- Baseline control sets (Low, Moderate, High impact levels)
-
-### 🛡️ NIST SP 800-171 Rev 2 CUI Baseline
-- Complete CUI baseline profile for protecting Controlled Unclassified Information
-- SP 800-171 specific control requirements
-- Baseline assessment and compliance tools
-
-### 📈 Cybersecurity Maturity Model Certification (CMMC) 2.0
-- Complete CMMC framework with all 5 maturity levels
-- Level-specific control requirements and assessments
-- Compliance evaluation against target maturity levels
-- CMMC level progress tracking and gap analysis
-
-### ☁️ Federal Risk and Authorization Management Program (FedRAMP)
-- FedRAMP Rev 4 framework structure and requirements
-- Impact level baselines (Low, Moderate, High) based on FIPS-199
-- Cloud service provider readiness assessments
-- Authorization pathway guidance and recommendations
-
-### 🛡️ NIST Cybersecurity Framework 2.0
-- Complete CSF functions: Identify, Protect, Detect, Respond, Recover
-- Categories and subcategories with detailed descriptions
-- Framework core structure and relationships
-
-### 🔗 Control Mappings
-- SP 800-53 to CSF mappings
-- Cross-reference controls with framework subcategories
-- Bidirectional relationship analysis
-
-### 📋 OSCAL Support
-- JSON schema validation for OSCAL documents
-- Support for catalogs, profiles, SSPs, assessment plans, and POA&Ms
-- Example OSCAL documents for reference
-
-### 🔍 Advanced Search & Analysis
-- Keyword search across control content
-- Family-based filtering and organization
-- Control relationship mapping
-- Baseline compliance checking
-
-## Quick Start
-
-### Prerequisites
-
-This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management. uv is significantly faster than pip and provides better dependency resolution.
-
-### 1. Installation
-
-#### Option A: Automated Installation (Recommended)
+Get started with NIST's complete control catalog in minutes:
 
 ```bash
-# Clone the repository
+# Install and run
 git clone https://github.com/your-username/nist-mcp.git
 cd nist-mcp
-
-# Run the installation script (installs uv, dependencies, and downloads data)
 ./scripts/install.sh
-```
-
-#### Option B: Manual Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/nist-mcp.git
-cd nist-mcp
-
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install dependencies with uv
-uv sync --dev
-
-# Or with pip (alternative)
-pip install -e ".[dev]"
-```
-
-### 2. Download NIST Data
-
-```bash
-# Download official NIST data sources
-python scripts/download_nist_data.py
-
-# For verbose output
-python scripts/download_nist_data.py --verbose
-
-# Force re-download existing files
-python scripts/download_nist_data.py --force
-```
-
-### 3. Run the Server
-
-```bash
-# Start the MCP server
-nist-mcp
-
-# Or run directly with Python
 python -m nist_mcp.server
 ```
 
-## MCP Tools Available
+That's it! Your MCP server is now running with access to 1,196+ NIST security controls.
 
-The server provides the following MCP tools for AI assistants:
+## 🔧 What You Can Do
 
-### Control Management
-- `list_controls()` - List all available NIST controls
-- `get_control(control_id)` - Get detailed control information
-- `search_controls(query, family, limit)` - Search controls by keyword
-- `get_control_family(family)` - Get all controls in a family (e.g., "AC", "AU")
-- `get_control_mappings(control_id)` - Get CSF mappings for a control
-- `get_baseline_controls(baseline)` - Get controls for Low/Moderate/High baselines
-- `control_relationships(control_id)` - Analyze control relationships and dependencies
+### Core Control Operations
+- **Browse all NIST SP 800-53 controls** (1,196 total: base controls + enhancements)
+- **Get detailed control information** with implementation guidance
+- **Search by keywords, families, or baseline levels**
+- **Map controls to Cybersecurity Framework subcategories**
 
-### SP 800-171/CUI Baseline
-- `get_sp800171_baseline()` - Get SP 800-171 CUI baseline controls
-
-### CMMC Framework
-- `get_cmmc_framework()` - Get complete CMMC 2.0 framework structure
-- `get_cmmc_level(level)` - Get controls for specific CMMC level (1-5)
-- `cmmc_compliance_assessment(implemented_controls, target_level)` - Assess CMMC compliance
-
-### FedRAMP Framework
-- `get_fedramp_framework()` - Get complete FedRAMP framework structure
-- `get_fedramp_baseline(impact_level)` - Get FedRAMP controls for specific impact level
-- `fedramp_readiness_assessment(implemented_controls, service_model)` - Assess FedRAMP readiness
+### Enterprise Compliance Support
+- **CMMC 2.0 assessments** across all 5 maturity levels
+- **FedRAMP readiness** for Low/Moderate/High impact systems
+- **SP 800-171 CUI baseline** for protecting sensitive information
+- **NIST Cybersecurity Framework** alignment and mapping
 
 ### Advanced Analysis
-- `gap_analysis(implemented_controls, target_baseline)` - Perform compliance gap analysis
-- `risk_assessment_helper(control_ids)` - Assess risk coverage of control selection
-- `compliance_mapping(framework, control_ids)` - Map to SOC2, ISO27001, etc.
-- `analyze_control_coverage(control_ids)` - Analyze coverage across control families
+- **Gap analysis** against baseline requirements
+- **Coverage assessments** across control families
+- **Compliance mapping** to other frameworks (SOC2, ISO27001)
+- **Risk evaluation** of control implementations
 
-### Cybersecurity Framework (CSF)
-- `get_csf_framework()` - Get complete NIST CSF 2.0 structure
-- `search_csf_subcategories(query, function)` - Search CSF subcategories
-- `csf_to_controls_mapping(subcategory_id)` - Map CSF subcategories to controls
+## 📖 Installation & Setup
 
-### OSCAL Processing
-- `validate_oscal_document(document, document_type)` - Validate OSCAL documents
-- Schema validation for catalogs, profiles, SSPs, assessment plans, POA&Ms
-- Support for all major OSCAL document types with JSON Schema validation
+### One-Command Setup (Recommended)
+
+```bash
+git clone https://github.com/your-username/nist-mcp.git
+cd nist-mcp
+./scripts/install.sh
+python -m nist_mcp.server
+```
+
+**That's it!** Your NIST MCP server is now running with 1,196+ controls.
+
+### Manual Setup
+
+```bash
+# 1. Clone and install
+git clone https://github.com/your-username/nist-mcp.git
+cd nist-mcp
+pip install -e ".[dev]"
+
+# 2. Download NIST data
+python scripts/download_nist_data.py
+
+# 3. Start server
+python -m nist_mcp.server
+```
+
+### Prerequisites
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) package manager (optional, but recommended)
+
+## 🛠️ Practical Examples
+
+Here are real examples of how to use the NIST MCP tools:
+
+### Basic Control Lookup
+
+**"What does AC-1 say?"**
+```json
+// Call: get_control("AC-1")
+{
+  "id": "ac-1",
+  "title": "Policy and Procedures",
+  "class": "SP800-53",
+  "family": "AC",
+  "parts": [
+    {
+      "name": "statement",
+      "prose": "The organization develops and maintains a comprehensive security policy..."
+    }
+  ],
+  "links": [...]
+}
+```
+
+**"Show me all Access Control family controls"**
+```json
+// Call: get_control_family("AC")
+{
+  "family": "AC",
+  "name": "Access Control",
+  "description": "The AC family contains controls...",
+  "total_controls": 57,
+  "base_controls": 25,
+  "enhancements": 32,
+  "controls": [...]
+}
+```
+
+### Compliance Analysis
+
+**"Do we meet Moderate baseline requirements?"**
+```json
+// Call: gap_analysis(implemented_controls=["AC-1", "AU-1"], target_baseline="moderate")
+{
+  "total_required": 177,
+  "implemented_count": 2,
+  "missing_count": 175,
+  "compliance_percentage": 1.13,
+  "critical_gaps": ["Risk Assessment", "Configuration Management"],
+  "next_priorities": ["AC-2", "IA-2", "AU-2"]
+}
+```
+
+**"What's our CMMC Level 2 readiness?"**
+```json
+// Call: cmmc_compliance_assessment(implemented_controls=["AC-1", "IA-2"], target_level=2)
+{
+  "current_level": 1,
+  "target_level": 2,
+  "achieved_domains": ["AC", "IA"],
+  "missing_domains": ["CM", "CP", "IR"],
+  "progress_percentage": 23.5,
+  "next_steps": ["Implement CM-2", "Add CP-9 controls"]
+}
+```
+
+### Risk Assessments
+
+**"How risky is our current access control implementation?"**
+```json
+// Call: risk_assessment_helper(control_ids=["AC-1", "AC-2", "IA-3"])
+{
+  "overall_risk_score": 7.3,
+  "critical_gaps": ["AC-6 (Least Privilege)", "AC-18 (Wireless Access)"],
+  "recommendations": [
+    "Implement multi-factor authentication (IA-3)",
+    "Review access control policies (AC-1)",
+    "Add session timeout controls"
+  ]
+}
+```
+
+### Enterprise Framework Alignment
+
+**"Map our controls to NIST CSF functions"**
+```json
+// Call: get_control_mappings("AC-1")
+{
+  "control_id": "AC-1",
+  "csf_mappings": ["PR.IP-1", "PR.IP-6"],
+  "functions": ["Protect"],
+  "categories": ["Identity Management"],
+  "rationale": "Policy framework supports identity protection"
+}
+```
+
+**"Prepare for FedRAMP Moderate authorization"**
+```json
+// Call: get_baseline_controls("moderate")
+{
+  "baseline": "Moderate",
+  "total_controls": 177,
+  "required_families": {
+    "AC": 12, "AU": 9, "CA": 5,
+    "CM": 10, "IA": 8, "IR": 6,
+    "MP": 4, "PE": 8, "PS": 3,
+    "RA": 5, "SC": 45, "SI": 16,
+    "SA": 6, "AT": 1, "PL": 2
+  },
+  "implementation_timeline": "12-18 months"
+}
+```
+
+## 📚 MCP Tool Reference
+
+### Core Control Operations
+- **`list_controls()`** - Browse all 1,196 NIST controls
+- **`get_control("AC-1")`** - Get detailed control info with implementation guidance
+- **`search_controls("access", "AC", 10)`** - Search controls by keyword within families
+- **`get_control_family("AC")`** - Get complete access control family (57 total controls)
+
+### Framework & Compliance
+- **`get_baseline_controls("moderate")`** - NIST baselines for system categorization
+- **`cmmc_compliance_assessment(current_controls, 3)`** - CMMC readiness assessment
+- **`fedramp_readiness_assessment(controls, "saas")`** - FedRAMP cloud readiness
+- **`get_sp800171_baseline()`** - CUI protection baseline (DOD contractors)
+
+### Advanced Analysis
+- **`gap_analysis(implemented, "high")`** - Identify missing controls against baselines
+- **`analyze_control_coverage(["AC-1", "AU-1"])`** - Assess control family coverage
+- **`compliance_mapping("ISO27001", controls)`** - Cross-framework mapping
+
+### Cybersecurity Framework
+- **`get_csf_framework()`** - Complete NIST CSF 2.0 with all functions
+- **`search_csf_subcategories("multi-factor")`** - Find relevant CSF subcategories
+- **`csf_to_controls_mapping("PR.AC-1")`** - Map CSF requirements to controls
 
 ## Project Structure
 
@@ -177,126 +232,28 @@ nist-mcp/
 └── tests/                  # Test suite
 ```
 
-## Data Sources
+## 📋 Important Notes
 
-This project uses official public domain data from NIST:
+### Data Sources
+Uses official public domain NIST data:
+- **SP 800-53 Rev 5** (1,196 controls)
+- **Cybersecurity Framework 2.0**
+- **OSCAL schemas** for document validation
 
-### Primary Sources
-- **NIST SP 800-53 Rev 5** - Security and Privacy Controls (Public Domain)
-- **NIST Cybersecurity Framework 2.0** - Framework Core (Public Domain)
-- **OSCAL Schemas v1.1.3** - Open Security Controls Assessment Language (Apache 2.0)
-
-### Downloaded Content
-- Complete SP 800-53 controls catalog (JSON/XML)
-- Low, Moderate, and High baseline profiles
-- CSF 2.0 functions, categories, and subcategories
-- Control-to-CSF mappings
-- OSCAL JSON schemas for all document types
-
-## Development
-
-### Setup Development Environment
-
+### Development & Testing
 ```bash
-# Install development dependencies
-uv sync --dev
-
-# Setup development environment (includes pre-commit hooks)
-make setup-dev
-
-# Or manually:
-pre-commit install
+uv sync --dev                    # Install dev tools
+make test                       # Run full test suite
+make test-security              # Security testing only
+python -m nist_mcp.server       # Start server
 ```
 
-### Testing
+### License
+- **MIT License** (code)
+- **Public Domain** (NIST data)
+- **Apache 2.0** (OSCAL schemas)
 
-We use a comprehensive testing approach with multiple layers:
-
-```bash
-# Run all tests
-make test
-
-# Run specific test categories
-make test-security      # Security and vulnerability tests
-make test-quality       # Code quality and linting
-make test-integration   # MCP integration tests
-make test-performance   # Performance and load tests
-make test-coverage      # Coverage analysis
-
-# Code quality tools
-make lint              # Ruff linting
-make format            # Code formatting
-make type-check        # MyPy type checking
-make security          # Bandit + Safety security scans
-```
-
-### Code Quality Tools
-
-- **uv**: Fast Python package manager (10-100x faster than pip)
-- **Ruff**: Fast Python linter and formatter
-- **Bandit**: Security vulnerability scanner
-- **Safety**: Dependency vulnerability checker
-- **MyPy**: Static type checking
-- **pytest**: Testing framework with async support
-- **Coverage**: Code coverage analysis
-
-### Why uv?
-
-We use [uv](https://docs.astral.sh/uv/) for package management because it:
-- **10-100x faster** than pip for dependency resolution and installation
-- **Better dependency resolution** with conflict detection
-- **Reproducible builds** with lock files
-- **Cross-platform compatibility** (Windows, macOS, Linux)
-- **Drop-in replacement** for pip with better UX
-
-### Adding New Tools
-
-The MCP server is designed for extensibility. To add new tools:
-
-1. Create tool functions in `src/nist_mcp/server.py`
-2. Use the `@app.tool()` decorator
-3. Add data loading logic to `data/loader.py` if needed
-4. Update tests and documentation
-
-## Configuration
-
-### Data Path
-By default, the server looks for data in the `data/` directory. You can specify a custom path:
-
-```python
-from nist_mcp.server import NISTMCPServer
-server = NISTMCPServer(data_path="/custom/path/to/data")
-```
-
-### Logging
-Configure logging level for debugging:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-## License
-
-MIT License - See LICENSE file for details.
-
-### Third-Party Data Licenses
-- NIST publications are in the public domain (U.S. Government Work)
-- OSCAL schemas are licensed under Apache 2.0
-- See `THIRD_PARTY_LICENSES/` directory for complete license information
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite and linting
-6. Submit a pull request
-
-## Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Check the documentation in the `docs/` directory
-- Review example usage in `data/examples/`
+### Support
+- [Documentation](docs/README.md)
+- [Create Issue](https://github.com/your-username/nist-mcp/issues)
+- [Contributing Guide](CONTRIBUTING.md)
